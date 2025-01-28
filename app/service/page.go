@@ -42,7 +42,7 @@ func (s *Page) Delete(id string) error {
 }
 
 func (s *Page) Insert(page *database.Page) error {
-	if err := s.db.Insert(page); err != nil {
+	if err := s.db.InsertPage(page); err != nil {
 		return fmt.Errorf("failed to insert page by id %s: %v", page.ID, err)
 	}
 
@@ -50,7 +50,7 @@ func (s *Page) Insert(page *database.Page) error {
 }
 
 func (s *Page) Update(page *database.Page) error {
-	if err := s.db.Update(page); err != nil {
+	if err := s.db.UpdatePage(page); err != nil {
 		return fmt.Errorf("failed to update page by id %s: %v", page.ID, err)
 	}
 

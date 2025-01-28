@@ -66,16 +66,9 @@ func (c *Page) Update(ctx *fiber.Ctx) error {
 }
 
 func (c *Page) Delete(ctx *fiber.Ctx) error {
-	var req dao.IdDao[string]
+	id := ctx.Params("id")
 
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(dao.NoDataResponse{
-			Error: true,
-			Msg:   fmt.Sprintf("failed to parse body: %v", err),
-		})
-	}
-
-	if err := c.pageService.Delete(req.ID); err != nil {
+	if err := c.pageService.Delete(id); err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
 			Msg:   fmt.Sprintf("failed to delete page: %v", err),

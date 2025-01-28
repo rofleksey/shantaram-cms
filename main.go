@@ -42,10 +42,12 @@ func main() {
 	authService := service.NewAuth(cfg)
 	pageService := service.NewPage(db)
 	uploadsService := service.NewUploads(appCtx)
+	fileService := service.NewFile(db, uploadsService)
 
 	healthController := controller.NewHealth()
 	authController := controller.NewAuth(authService)
 	pageController := controller.NewPage(pageService)
+	fileController := controller.NewFile(fileService, uploadsService)
 
 	app := fiber.New(fiber.Config{
 		BodyLimit: 1024 * 1024 * 100, // 100 mb
@@ -53,7 +55,7 @@ func main() {
 
 	middleware.FiberMiddleware(app, cfg)
 	routes.StaticRoutes(app)
-	routes.PublicRoutes(healthController, authController, pageController, app)
+	routes.PublicRoutes(healthController, authController, pageController, fileController, app)
 	routes.NotFoundRoute(app)
 
 	go func() {

@@ -11,3 +11,11 @@ type Page struct {
 	Title    string    `json:"title"`
 	Elements []Element `json:"elements"`
 }
+
+type File struct {
+	ID    uint64 `json:"id"`
+	Path  string `json:"path"`
+	Title string `json:"title"`
+	Name  string `json:"name"`
+	Size  int64  `json:"size"`
+}

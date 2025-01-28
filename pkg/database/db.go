@@ -9,6 +9,7 @@ import (
 )
 
 var pageBucket = []byte("pages")
+var filesBucket = []byte("files")
 
 type Database struct {
 	db *bbolt.DB
@@ -94,7 +95,7 @@ func (d *Database) GetPageByID(id string) (*Page, error) {
 	return &page, nil
 }
 
-func (d *Database) Insert(page *Page) error {
+func (d *Database) InsertPage(page *Page) error {
 	key := []byte(page.ID)
 
 	value, err := json.Marshal(page)
@@ -112,13 +113,13 @@ func (d *Database) Insert(page *Page) error {
 		return b.Put(key, value)
 	})
 	if err != nil {
-		return fmt.Errorf("update failed: %v", err)
+		return fmt.Errorf("insert failed: %v", err)
 	}
 
 	return nil
 }
 
-func (d *Database) Update(page *Page) error {
+func (d *Database) UpdatePage(page *Page) error {
 	key := []byte(page.ID)
 
 	value, err := json.Marshal(page)
@@ -161,10 +162,99 @@ func (d *Database) DeletePage(id string) error {
 	return nil
 }
 
+func (d *Database) InsertFile(file *File) error {
+	err := d.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(filesBucket)
+
+		newId, err := b.NextSequence()
+		if err != nil {
+			return fmt.Errorf("failed to get next id: %v", err)
+		}
+
+		file.ID = newId
+
+		value, err := json.Marshal(file)
+		if err != nil {
+			return fmt.Errorf("failed to marshal: %v", err)
+		}
+
+		key := []byte(fmt.Sprintf("%d", newId))
+
+		if b.Get(key) != nil {
+			return fmt.Errorf("file with id = %d already exists", file.ID)
+		}
+
+		return b.Put(key, value)
+	})
+	if err != nil {
+		return fmt.Errorf("insert failed: %v", err)
+	}
+
+	return nil
+}
+
+func (d *Database) DeleteFile(id uint64) error {
+	err := d.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(filesBucket)
+
+		key := []byte(fmt.Sprintf("%d", id))
+		v := b.Get(key)
+		if v == nil {
+			return fmt.Errorf("file with id = %d not found", id)
+		}
+
+		return b.Delete(key)
+	})
+	if err != nil {
+		return fmt.Errorf("delete failed: %v", err)
+	}
+
+	return nil
+}
+
+func (d *Database) GetAllFiles() ([]File, error) {
+	var result []File
+
+	err := d.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(filesBucket)
+
+		err := b.ForEach(func(k, v []byte) error {
+			var file File
+
+			err := json.Unmarshal(v, &file)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal file: %v", err)
+			}
+
+			result = append(result, file)
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("bucket for each error: %v", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("view failed: %v", err)
+	}
+
+	if len(result) == 0 {
+		result = []File{}
+	}
+
+	return result, nil
+}
+
 func (d *Database) Init() error {
 	if err := d.db.Batch(func(tx *bbolt.Tx) error {
 		if _, err := tx.CreateBucketIfNotExists(pageBucket); err != nil {
 			return fmt.Errorf("failed to create pages bucket: %v", err)
+		}
+
+		if _, err := tx.CreateBucketIfNotExists(filesBucket); err != nil {
+			return fmt.Errorf("failed to create files bucket: %v", err)
 		}
 
 		return nil
@@ -173,7 +263,7 @@ func (d *Database) Init() error {
 	}
 
 	if _, err := d.GetPageByID("index"); err != nil {
-		_ = d.Insert(&Page{
+		_ = d.InsertPage(&Page{
 			ID:    "index",
 			Title: "Главная",
 		})

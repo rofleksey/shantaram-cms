@@ -32,7 +32,7 @@ func (s *Upload) newFilePath(dir, ext string) string {
 	for {
 		id := uuid.New().String()
 		name := fmt.Sprintf("%s.%s", id, ext)
-		filePath := filepath.Join("storage", dir, name)
+		filePath := filepath.Join("data", dir, name)
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			return filePath
 		}
