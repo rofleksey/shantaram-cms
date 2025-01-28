@@ -37,13 +37,13 @@ func (c *Auth) Login(ctx *fiber.Ctx) error {
 		if errors.Is(err, util.ErrInvalidCredentials) {
 			return ctx.Status(http.StatusUnauthorized).JSON(dao.NoDataResponse{
 				Error: true,
-				Msg:   fmt.Sprintf("failed to login: %v", err),
+				Msg:   fmt.Sprintf("не удалось войти: %v", err),
 			})
 		}
 
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
-			Msg:   fmt.Sprintf("failed to login: %v", err),
+			Msg:   fmt.Sprintf("не удалось войти: %v", err),
 		})
 	}
 

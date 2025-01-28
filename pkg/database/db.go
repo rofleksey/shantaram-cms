@@ -74,7 +74,7 @@ func (d *Database) GetPageByID(id string) (*Page, error) {
 		v := b.Get(key)
 
 		if v == nil {
-			return fmt.Errorf("page with id = %s not found", id)
+			return fmt.Errorf("страница с id = %s не найдена", id)
 		}
 
 		err := json.Unmarshal(v, &page)
@@ -107,7 +107,7 @@ func (d *Database) InsertPage(page *Page) error {
 		b := tx.Bucket(pageBucket)
 
 		if b.Get(key) != nil {
-			return fmt.Errorf("page with id = %s already exists", page.ID)
+			return fmt.Errorf("страница с id = %s уже существует", page.ID)
 		}
 
 		return b.Put(key, value)
@@ -131,7 +131,7 @@ func (d *Database) UpdatePage(page *Page) error {
 		b := tx.Bucket(pageBucket)
 
 		if b.Get(key) == nil {
-			return fmt.Errorf("page with id = %s not found", page.ID)
+			return fmt.Errorf("страница с id = %s не найдена", page.ID)
 		}
 
 		return b.Put(key, value)
@@ -181,7 +181,7 @@ func (d *Database) InsertFile(file *File) error {
 		key := []byte(fmt.Sprintf("%d", newId))
 
 		if b.Get(key) != nil {
-			return fmt.Errorf("file with id = %d already exists", file.ID)
+			return fmt.Errorf("файл с id = %d уже существует", file.ID)
 		}
 
 		return b.Put(key, value)
@@ -200,7 +200,7 @@ func (d *Database) DeleteFile(id uint64) error {
 		key := []byte(fmt.Sprintf("%d", id))
 		v := b.Get(key)
 		if v == nil {
-			return fmt.Errorf("file with id = %d not found", id)
+			return fmt.Errorf("файл с id = %d не найден", id)
 		}
 
 		return b.Delete(key)

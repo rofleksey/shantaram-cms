@@ -34,7 +34,7 @@ func (c *Page) Insert(ctx *fiber.Ctx) error {
 	if err := c.pageService.Insert(&req); err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
-			Msg:   fmt.Sprintf("failed to insert page: %v", err),
+			Msg:   fmt.Sprintf("не удалось создать страницу: %v", err),
 		})
 	}
 
@@ -56,7 +56,7 @@ func (c *Page) Update(ctx *fiber.Ctx) error {
 	if err := c.pageService.Update(&req); err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
-			Msg:   fmt.Sprintf("failed to update page: %v", err),
+			Msg:   fmt.Sprintf("не удалось обновить страницу: %v", err),
 		})
 	}
 
@@ -71,7 +71,7 @@ func (c *Page) Delete(ctx *fiber.Ctx) error {
 	if err := c.pageService.Delete(id); err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
-			Msg:   fmt.Sprintf("failed to delete page: %v", err),
+			Msg:   fmt.Sprintf("не удалось обновить страницу: %v", err),
 		})
 	}
 
@@ -87,7 +87,7 @@ func (c *Page) GetByID(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
-			Msg:   fmt.Sprintf("failed to get page by id: %v", err),
+			Msg:   fmt.Sprintf("не удалось получить страницу по id: %v", err),
 		})
 	}
 
@@ -101,7 +101,7 @@ func (c *Page) GetAll(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
-			Msg:   fmt.Sprintf("failed to get all pages: %v", err),
+			Msg:   fmt.Sprintf("не удалось получить список страниц: %v", err),
 		})
 	}
 
