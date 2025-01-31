@@ -34,9 +34,18 @@ func (s *File) GetAll() ([]database.File, error) {
 }
 
 func (s *File) Delete(id uint64) error {
+	file, err := s.db.GetFileByID(id)
+	if err != nil {
+		return fmt.Errorf("failed to get file by id %d: %v", id, err)
+	}
+
+	filePath := filepath.Join("data", "uploads", file.Path)
+
 	if err := s.db.DeleteFile(id); err != nil {
 		return fmt.Errorf("failed to delete file by id %d: %v", id, err)
 	}
+
+	_ = os.Remove(filePath)
 
 	return nil
 }

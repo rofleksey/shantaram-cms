@@ -20,6 +20,8 @@ func main() {
 	appCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	os.RemoveAll(filepath.Join("data", "temp"))
+
 	os.MkdirAll(filepath.Join("data", "uploads"), os.ModePerm)
 	os.MkdirAll(filepath.Join("data", "temp"), os.ModePerm)
 

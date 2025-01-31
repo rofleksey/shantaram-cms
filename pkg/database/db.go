@@ -162,6 +162,32 @@ func (d *Database) DeletePage(id string) error {
 	return nil
 }
 
+func (d *Database) GetFileByID(id uint64) (*File, error) {
+	var file File
+
+	err := d.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(filesBucket)
+		key := []byte(fmt.Sprintf("%d", id))
+		v := b.Get(key)
+
+		if v == nil {
+			return fmt.Errorf("файл с id = %d не найден", id)
+		}
+
+		err := json.Unmarshal(v, &file)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal file: %v", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("view failed: %v", err)
+	}
+
+	return &file, nil
+}
+
 func (d *Database) InsertFile(file *File) error {
 	err := d.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket(filesBucket)
