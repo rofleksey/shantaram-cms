@@ -35,7 +35,7 @@ func (s *Page) GetAll() ([]database.Page, error) {
 
 func (s *Page) Delete(id string) error {
 	if id == "index" {
-		return fmt.Errorf("can't delete index page")
+		return fmt.Errorf("нельзя удалить главную страницу")
 	}
 
 	if err := s.db.DeletePage(id); err != nil {
