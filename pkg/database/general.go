@@ -51,3 +51,20 @@ func (d *Database) GetGeneralByID(id string) (any, error) {
 
 	return data, nil
 }
+
+func (d *Database) GetGeneralByIDData(id string) ([]byte, error) {
+	var data []byte
+
+	err := d.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(generalBucket)
+		key := []byte(id)
+		data = b.Get(key)
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("view failed: %v", err)
+	}
+
+	return data, nil
+}

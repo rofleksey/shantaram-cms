@@ -45,7 +45,8 @@ func main() {
 	pageService := service.NewPage(db)
 	uploadsService := service.NewUploads(appCtx)
 	fileService := service.NewFile(db, uploadsService)
-	orderService := service.NewOrder(db)
+	captchaService := service.NewCaptcha()
+	orderService := service.NewOrder(db, captchaService)
 	generalService := service.NewGeneral(db)
 
 	healthController := controller.NewHealth()
@@ -53,6 +54,7 @@ func main() {
 	pageController := controller.NewPage(pageService)
 	fileController := controller.NewFile(fileService, uploadsService)
 	orderController := controller.NewOrder(orderService)
+	captchaController := controller.NewCaptcha(captchaService)
 	generalController := controller.NewGeneral(generalService)
 
 	app := fiber.New(fiber.Config{
@@ -61,7 +63,8 @@ func main() {
 
 	middleware.FiberMiddleware(app, cfg)
 	routes.StaticRoutes(app)
-	routes.PublicRoutes(healthController, authController, pageController, fileController, orderController, generalController, app)
+	routes.PublicRoutes(healthController, authController, pageController, fileController, orderController,
+		captchaController, generalController, app)
 	routes.NotFoundRoute(app)
 
 	go func() {

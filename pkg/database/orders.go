@@ -82,14 +82,21 @@ func (d *Database) InsertOrder(order *Order) error {
 	key := []byte(fmt.Sprintf("%d", order.ID))
 	indexKey := []byte(order.Created.Format(time.RFC3339))
 
-	value, err := json.Marshal(order)
-	if err != nil {
-		return fmt.Errorf("failed to marshal: %v", err)
-	}
-
-	err = d.db.Batch(func(tx *bbolt.Tx) error {
+	err := d.db.Batch(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(ordersBucket)
 		indexBucket := tx.Bucket(ordersIndexBucket)
+
+		newId, err := bucket.NextSequence()
+		if err != nil {
+			return fmt.Errorf("failed to get next id: %v", err)
+		}
+
+		order.ID = newId
+
+		value, err := json.Marshal(order)
+		if err != nil {
+			return fmt.Errorf("failed to marshal: %v", err)
+		}
 
 		if bucket.Get(key) != nil {
 			return fmt.Errorf("заказ с id = %d уже существует", order.ID)
@@ -146,7 +153,7 @@ func (d *Database) DeleteOrder(id uint64) error {
 
 		v := bucket.Get(key)
 		if v == nil {
-			return fmt.Errorf("заказ с ID = %s не найден", id)
+			return fmt.Errorf("заказ с ID = %d не найден", id)
 		}
 
 		var order Order

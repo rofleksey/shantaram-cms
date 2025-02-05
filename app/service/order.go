@@ -1,17 +1,25 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
+	"shantaram-cms/app/dao"
 	"shantaram-cms/pkg/database"
+	"time"
 )
 
 type Order struct {
-	db *database.Database
+	db             *database.Database
+	captchaService *Captcha
 }
 
-func NewOrder(db *database.Database) *Order {
+func NewOrder(
+	db *database.Database,
+	captchaService *Captcha,
+) *Order {
 	return &Order{
-		db: db,
+		db:             db,
+		captchaService: captchaService,
 	}
 }
 
@@ -41,8 +49,50 @@ func (s *Order) Delete(id uint64) error {
 	return nil
 }
 
-func (s *Order) Insert(order *database.Order) error {
-	if err := s.db.InsertOrder(order); err != nil {
+func (s *Order) Insert(req dao.NewOrderRequest) error {
+	captchaOk := s.captchaService.Verify(req.CaptchaID, req.CaptchaAnswer)
+	if !captchaOk {
+		return fmt.Errorf("invalid captcha answer")
+	}
+
+	bytez, err := s.db.GetGeneralByIDData("menu")
+	if err != nil {
+		return fmt.Errorf("failed to get menu: %v", err)
+	}
+
+	var settings database.MenuSettings
+
+	if err := json.Unmarshal(bytez, &settings); err != nil {
+		return fmt.Errorf("failed to unmarshal menu: %v", err)
+	}
+
+	orderItems := make([]database.OrderItem, 0, len(req.Items))
+
+	for _, item := range req.Items {
+		menuItem := settings.FindProduct(item.ID)
+
+		if menuItem == nil {
+			return fmt.Errorf("продукт с ID = %s не найден в меню", item.ID)
+		}
+
+		orderItems = append(orderItems, database.OrderItem{
+			ID:     item.ID,
+			Title:  menuItem.Title,
+			Price:  menuItem.Price,
+			Amount: item.Amount,
+		})
+	}
+
+	order := database.Order{
+		Created: time.Now(),
+		Status:  database.OrderStatusOpen,
+		Name:    req.Name,
+		Phone:   req.Phone,
+		Comment: req.Comment,
+		Items:   orderItems,
+	}
+
+	if err := s.db.InsertOrder(&order); err != nil {
 		return fmt.Errorf("failed to insert order: %v", err)
 	}
 

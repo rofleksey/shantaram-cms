@@ -23,7 +23,7 @@ func NewOrder(
 }
 
 func (c *Order) Insert(ctx *fiber.Ctx) error {
-	var req database.Order
+	var req dao.NewOrderRequest
 
 	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(dao.NoDataResponse{
@@ -32,7 +32,14 @@ func (c *Order) Insert(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := c.orderService.Insert(&req); err != nil {
+	if len(req.Items) == 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(dao.NoDataResponse{
+			Error: true,
+			Msg:   "empty order",
+		})
+	}
+
+	if err := c.orderService.Insert(req); err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
 			Error: true,
 			Msg:   fmt.Sprintf("не удалось создать заказ: %v", err),

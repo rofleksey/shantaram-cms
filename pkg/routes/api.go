@@ -12,6 +12,7 @@ func PublicRoutes(
 	pageController *controller.Page,
 	fileController *controller.File,
 	orderController *controller.Order,
+	captchaController *controller.Captcha,
 	generalController *controller.General,
 	app *fiber.App,
 ) {
@@ -37,8 +38,10 @@ func PublicRoutes(
 	route.Get("/orders", middleware.AdminRestricted(), orderController.GetPaginated)
 	route.Delete("/order/:id", middleware.AdminRestricted(), orderController.Delete)
 	route.Put("/order", middleware.AdminRestricted(), orderController.Update)
-	route.Post("/order", middleware.AdminRestricted(), orderController.Insert)
+	route.Post("/order", orderController.Insert)
 
 	route.Get("/general/:id", generalController.GetByID)
 	route.Post("/general/:id", middleware.AdminRestricted(), generalController.Upsert)
+
+	route.Get("/captcha", captchaController.Generate)
 }
