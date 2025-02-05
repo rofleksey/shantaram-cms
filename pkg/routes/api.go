@@ -11,6 +11,7 @@ func PublicRoutes(
 	authController *controller.Auth,
 	pageController *controller.Page,
 	fileController *controller.File,
+	orderController *controller.Order,
 	generalController *controller.General,
 	app *fiber.App,
 ) {
@@ -31,6 +32,12 @@ func PublicRoutes(
 	route.Delete("/file/:id", middleware.AdminRestricted(), fileController.Delete)
 	route.Post("/file", middleware.AdminRestricted(), fileController.Upload)
 	route.Get("/file/stats", middleware.AdminRestricted(), fileController.Stats)
+
+	route.Get("/order/:id", middleware.AdminRestricted(), orderController.GetByID)
+	route.Get("/orders", middleware.AdminRestricted(), orderController.GetPaginated)
+	route.Delete("/order/:id", middleware.AdminRestricted(), orderController.Delete)
+	route.Put("/order", middleware.AdminRestricted(), orderController.Update)
+	route.Post("/order", middleware.AdminRestricted(), orderController.Insert)
 
 	route.Get("/general/:id", generalController.GetByID)
 	route.Post("/general/:id", middleware.AdminRestricted(), generalController.Upsert)
