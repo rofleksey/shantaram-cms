@@ -9,17 +9,23 @@ import (
 )
 
 type Order struct {
-	db             *database.Database
-	captchaService *Captcha
+	db              *database.Database
+	captchaService  *Captcha
+	telegramService *Telegram
+	wsService       *WebSocket
 }
 
 func NewOrder(
 	db *database.Database,
 	captchaService *Captcha,
+	telegramService *Telegram,
+	wsService *WebSocket,
 ) *Order {
 	return &Order{
-		db:             db,
-		captchaService: captchaService,
+		db:              db,
+		captchaService:  captchaService,
+		telegramService: telegramService,
+		wsService:       wsService,
 	}
 }
 
@@ -45,6 +51,10 @@ func (s *Order) Delete(id uint64) error {
 	if err := s.db.DeleteOrder(id); err != nil {
 		return fmt.Errorf("failed to delete order by id %d: %v", id, err)
 	}
+
+	s.wsService.Publish(dao.WsChannelGlobal, dao.WsMessage{
+		Event: dao.WsEventOrdersChanged,
+	})
 
 	return nil
 }
@@ -96,6 +106,11 @@ func (s *Order) Insert(req dao.NewOrderRequest) error {
 		return fmt.Errorf("failed to insert order: %v", err)
 	}
 
+	s.telegramService.Notify(order.TelegramString())
+	s.wsService.Publish(dao.WsChannelGlobal, dao.WsMessage{
+		Event: dao.WsEventOrdersChanged,
+	})
+
 	return nil
 }
 
@@ -103,6 +118,10 @@ func (s *Order) Update(order *database.Order) error {
 	if err := s.db.UpdateOrder(order); err != nil {
 		return fmt.Errorf("failed to update order by id %d: %v", order.ID, err)
 	}
+
+	s.wsService.Publish(dao.WsChannelGlobal, dao.WsMessage{
+		Event: dao.WsEventOrdersChanged,
+	})
 
 	return nil
 }

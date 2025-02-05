@@ -41,12 +41,18 @@ func main() {
 		log.Fatalf("failed to init database: %s", err.Error())
 	}
 
+	telegramService, err := service.NewTelegram(appCtx, cfg)
+	if err != nil {
+		log.Fatalf("failed to init telegram: %v", err)
+	}
+
+	wsService := service.NewWebSocket()
 	authService := service.NewAuth(cfg)
 	pageService := service.NewPage(db)
 	uploadsService := service.NewUploads(appCtx)
 	fileService := service.NewFile(db, uploadsService)
 	captchaService := service.NewCaptcha()
-	orderService := service.NewOrder(db, captchaService)
+	orderService := service.NewOrder(db, captchaService, telegramService, wsService)
 	generalService := service.NewGeneral(db)
 
 	healthController := controller.NewHealth()
@@ -56,6 +62,7 @@ func main() {
 	orderController := controller.NewOrder(orderService)
 	captchaController := controller.NewCaptcha(captchaService)
 	generalController := controller.NewGeneral(generalService)
+	wsController := controller.NewWebSocket(wsService)
 
 	app := fiber.New(fiber.Config{
 		BodyLimit: 1024 * 1024 * 100, // 100 mb
@@ -64,7 +71,7 @@ func main() {
 	middleware.FiberMiddleware(app, cfg)
 	routes.StaticRoutes(app)
 	routes.PublicRoutes(healthController, authController, pageController, fileController, orderController,
-		captchaController, generalController, app)
+		captchaController, generalController, wsController, app)
 	routes.NotFoundRoute(app)
 
 	go func() {

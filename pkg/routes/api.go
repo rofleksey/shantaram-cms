@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"shantaram-cms/app/controller"
 	"shantaram-cms/pkg/middleware"
@@ -14,6 +15,7 @@ func PublicRoutes(
 	orderController *controller.Order,
 	captchaController *controller.Captcha,
 	generalController *controller.General,
+	wsController *controller.WebSocket,
 	app *fiber.App,
 ) {
 
@@ -22,6 +24,8 @@ func PublicRoutes(
 	route.Get("/healthz", healthController.Health)
 
 	route.Post("/login", authController.Login)
+
+	route.Get("/ws", middleware.WebSocketUpgrade(), websocket.New(wsController.GlobalHandler))
 
 	route.Get("/page/:id", pageController.GetByID)
 	route.Get("/pages", middleware.AdminRestricted(), pageController.GetAll)

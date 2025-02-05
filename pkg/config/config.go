@@ -8,8 +8,10 @@ import (
 )
 
 type Config struct {
-	JWTKey    string `yaml:"jwtKey" validate:"required"`
-	AdminPass string `yaml:"adminPass" validate:"required"`
+	JWTKey          string   `yaml:"jwtKey" validate:"required"`
+	AdminPass       string   `yaml:"adminPass" validate:"required"`
+	TelegramToken   string   `yaml:"telegramToken" validate:"required"`
+	TelegramChatIDs []string `yaml:"telegramChatIds" validate:"required"`
 }
 
 func Load() (*Config, error) {

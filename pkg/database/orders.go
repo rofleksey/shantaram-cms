@@ -79,7 +79,6 @@ func (d *Database) GetOrderByID(id uint64) (*Order, error) {
 }
 
 func (d *Database) InsertOrder(order *Order) error {
-	key := []byte(fmt.Sprintf("%d", order.ID))
 	indexKey := []byte(order.Created.Format(time.RFC3339))
 
 	err := d.db.Batch(func(tx *bbolt.Tx) error {
@@ -92,6 +91,7 @@ func (d *Database) InsertOrder(order *Order) error {
 		}
 
 		order.ID = newId
+		key := []byte(fmt.Sprintf("%d", newId))
 
 		value, err := json.Marshal(order)
 		if err != nil {
