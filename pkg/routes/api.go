@@ -16,6 +16,7 @@ func PublicRoutes(
 	captchaController *controller.Captcha,
 	generalController *controller.General,
 	wsController *controller.WebSocket,
+	statsController *controller.Stats,
 	app *fiber.App,
 ) {
 
@@ -48,4 +49,6 @@ func PublicRoutes(
 	route.Post("/general/:id", middleware.AdminRestricted(), generalController.Upsert)
 
 	route.Get("/captcha", captchaController.Generate)
+
+	route.Get("/stats", middleware.AdminRestricted(), statsController.Get)
 }

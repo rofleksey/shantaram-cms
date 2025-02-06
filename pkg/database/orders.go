@@ -8,6 +8,32 @@ import (
 	"time"
 )
 
+func (d *Database) IterateOrders(callback func(Order) error) error {
+	err := d.db.View(func(tx *bbolt.Tx) error {
+		bucket := tx.Bucket(ordersBucket)
+
+		c := bucket.Cursor()
+		for key, value := c.Last(); key != nil; key, value = c.Prev() {
+			var order Order
+
+			if err := json.Unmarshal(value, &order); err != nil {
+				return fmt.Errorf("failed to unmarshal order: %v", err)
+			}
+
+			if err := callback(order); err != nil {
+				return fmt.Errorf("callback error: %v", err)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("view failed: %v", err)
+	}
+
+	return nil
+}
+
 func (d *Database) GetOrdersPaginated(offset, limit int) (*DataPage[Order], error) {
 	var result DataPage[Order]
 
