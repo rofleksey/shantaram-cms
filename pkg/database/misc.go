@@ -9,6 +9,7 @@ type MenuProduct struct {
 type MenuGroup struct {
 	ID       string        `json:"id"`
 	Title    string        `json:"title"`
+	Tags     []string      `json:"tags"`
 	Products []MenuProduct `json:"products"`
 }
 

@@ -36,6 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect database: %s", err.Error())
 	}
+	defer db.Close()
 
 	if err := db.Init(); err != nil {
 		log.Fatalf("failed to init database: %s", err.Error())
