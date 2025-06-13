@@ -15,6 +15,7 @@ type Element struct {
 type Page struct {
 	ID       string    `json:"id"`
 	Title    string    `json:"title"`
+	Updated  time.Time `json:"updated"`
 	Elements []Element `json:"elements"`
 }
 

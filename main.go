@@ -58,6 +58,7 @@ func main() {
 	statsService := service.NewStats(db)
 
 	healthController := controller.NewHealth()
+	sitemapController := controller.NewSitemap(db, pageService)
 	authController := controller.NewAuth(authService)
 	pageController := controller.NewPage(pageService)
 	fileController := controller.NewFile(fileService, uploadsService)
@@ -73,8 +74,8 @@ func main() {
 
 	middleware.FiberMiddleware(app, cfg)
 	routes.StaticRoutes(app)
-	routes.PublicRoutes(healthController, authController, pageController, fileController, orderController,
-		captchaController, generalController, wsController, statsController, app)
+	routes.PublicRoutes(healthController, sitemapController, authController, pageController, fileController,
+		orderController, captchaController, generalController, wsController, statsController, app)
 	routes.NotFoundRoute(app)
 
 	go func() {

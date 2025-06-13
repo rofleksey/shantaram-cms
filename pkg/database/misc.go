@@ -1,5 +1,7 @@
 package database
 
+import "time"
+
 type MenuProduct struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
@@ -14,7 +16,8 @@ type MenuGroup struct {
 }
 
 type MenuSettings struct {
-	Groups []MenuGroup `json:"groups"`
+	Groups  []MenuGroup `json:"groups"`
+	Updated time.Time   `json:"updated"`
 }
 
 func (m *MenuSettings) FindProduct(id string) *MenuProduct {

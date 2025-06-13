@@ -9,6 +9,7 @@ import (
 
 func PublicRoutes(
 	healthController *controller.Health,
+	sitemapController *controller.Sitemap,
 	authController *controller.Auth,
 	pageController *controller.Page,
 	fileController *controller.File,
@@ -23,6 +24,7 @@ func PublicRoutes(
 	route := app.Group("/v1")
 
 	route.Get("/healthz", healthController.Health)
+	route.Get("/sitemap", sitemapController.GetSitemap)
 
 	route.Post("/login", authController.Login)
 
