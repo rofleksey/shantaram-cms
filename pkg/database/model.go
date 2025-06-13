@@ -13,10 +13,12 @@ type Element struct {
 }
 
 type Page struct {
-	ID       string    `json:"id"`
-	Title    string    `json:"title"`
-	Updated  time.Time `json:"updated"`
-	Elements []Element `json:"elements"`
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Keywords    string    `json:"keywords"`
+	Updated     time.Time `json:"updated"`
+	Elements    []Element `json:"elements"`
 }
 
 type File struct {
