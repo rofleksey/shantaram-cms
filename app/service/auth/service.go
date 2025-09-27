@@ -3,27 +3,34 @@ package auth
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"shantaram/pkg/config"
 	"shantaram/pkg/database"
+	"shantaram/pkg/telemetry"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/samber/do"
+	"go.opentelemetry.io/otel/attribute"
 )
 
+var serviceName = "auth"
+
+var ErrInvalidCredentials = errors.New("invalid username or password")
+
 type Service struct {
-	cfg       *config.Config
-	queries   *database.Queries
-	startTime time.Time
+	cfg     *config.Config
+	queries *database.Queries
+	tracing *telemetry.Tracing
 }
 
 func New(di *do.Injector) (*Service, error) {
 	return &Service{
-		cfg:       do.MustInvoke[*config.Config](di),
-		queries:   do.MustInvoke[*database.Queries](di),
-		startTime: time.Now(),
+		cfg:     do.MustInvoke[*config.Config](di),
+		queries: do.MustInvoke[*database.Queries](di),
+		tracing: do.MustInvoke[*telemetry.Tracing](di),
 	}, nil
 }
 
@@ -39,11 +46,16 @@ func (s *Service) IsAdminLocals(getter func(key string, value ...interface{}) in
 	return isAdmin
 }
 
-func (s *Service) Login(user, pass string) (string, error) {
-	user = strings.TrimSpace(user)
+func (s *Service) Login(ctx context.Context, user, pass string) (string, error) {
+	ctx, span := s.tracing.StartServiceSpan(ctx, serviceName, "login")
+	defer span.End()
 
-	if user != "admin" || pass != s.cfg.Admin.Password {
-		return "", fmt.Errorf("invalid username or password")
+	user = strings.TrimSpace(user)
+	span.SetAttributes(attribute.String("username", user))
+
+	success := user == "admin" && pass == s.cfg.Admin.Password
+	if !success {
+		return "", s.tracing.Error(span, ErrInvalidCredentials)
 	}
 
 	claims := jwt.MapClaims{
@@ -55,8 +67,10 @@ func (s *Service) Login(user, pass string) (string, error) {
 
 	tokenStr, err := token.SignedString([]byte(s.cfg.JWT.Secret))
 	if err != nil {
-		return "", fmt.Errorf("failed to sign token: %w", err)
+		return "", s.tracing.Error(span, fmt.Errorf("failed to sign token: %w", err))
 	}
+
+	s.tracing.Success(span)
 
 	return tokenStr, nil
 }

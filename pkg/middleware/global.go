@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"runtime/debug"
 	"shantaram/pkg/config"
+	"shantaram/pkg/telemetry"
 	"shantaram/pkg/util"
 	"slices"
 	"strings"
 
 	"github.com/elliotchance/pie/v2"
+	sentryotel "github.com/getsentry/sentry-go/otel"
 	jwtware "github.com/gofiber/contrib/jwt"
+	"github.com/gofiber/contrib/otelfiber/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -20,6 +23,7 @@ import (
 
 func FiberMiddleware(app *fiber.App, di *do.Injector) {
 	cfg := do.MustInvoke[*config.Config](di)
+	tel := do.MustInvoke[*telemetry.Telemetry](di)
 
 	staticOrigins := []string{
 		cfg.BaseApiURL,
@@ -29,7 +33,7 @@ func FiberMiddleware(app *fiber.App, di *do.Injector) {
 
 	// cors
 	app.Use(cors.New(cors.Config{
-		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Sentry-Trace, Baggage",
 		AllowMethods:     "POST, GET, OPTIONS, DELETE, PUT, PATCH, HEAD",
 		AllowCredentials: true,
 		AllowOriginsFunc: func(origin string) bool {
@@ -40,6 +44,13 @@ func FiberMiddleware(app *fiber.App, di *do.Injector) {
 			return false
 		},
 	}))
+
+	app.Use(otelfiber.Middleware(
+		otelfiber.WithMeterProvider(tel.MeterProvider),
+		otelfiber.WithTracerProvider(tel.TracerProvider),
+		otelfiber.WithPropagators(sentryotel.NewSentryPropagator()),
+		otelfiber.WithCollectClientIP(true),
+	))
 
 	// retrieve user ip
 	app.Use(func(ctx *fiber.Ctx) error {

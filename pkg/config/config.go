@@ -15,10 +15,12 @@ type Config struct {
 	BaseFrontURL string `yaml:"baseFrontURL" validate:"required"`
 
 	Sentry struct {
-		DSN              string  `yaml:"dsn"`
-		Environment      string  `yaml:"environment"`
-		TracesSampleRate float64 `yaml:"traces_sample_rate"`
+		DSN string `yaml:"dsn"`
 	} `yaml:"sentry"`
+
+	Telemetry struct {
+		OTLPEndpoint string `yaml:"otlp_endpoint"`
+	} `yaml:"telemetry"`
 
 	DB struct {
 		User     string `yaml:"user" validate:"required"`
@@ -36,24 +38,17 @@ type Config struct {
 	} `yaml:"admin"`
 }
 
-type Account struct {
-	Username     string `yaml:"username" validate:"required"`
-	RefreshToken string `yaml:"refresh_token" validate:"required"`
-}
-
 func Load() (*Config, error) {
 	span := sentry.StartSpan(context.Background(), "config.load")
 	defer span.Finish()
 
 	data, err := os.ReadFile("config.yaml")
 	if err != nil {
-		sentry.CaptureException(err)
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
 	var result Config
 	if err := yaml.Unmarshal(data, &result); err != nil {
-		sentry.CaptureException(err)
 		return nil, fmt.Errorf("failed to parse YAML config: %w", err)
 	}
 
@@ -62,13 +57,6 @@ func Load() (*Config, error) {
 	}
 	if result.BaseFrontURL == "" {
 		result.BaseFrontURL = "https://shantaram-spb.ru"
-	}
-
-	if result.Sentry.TracesSampleRate == 0 {
-		result.Sentry.TracesSampleRate = 1.0
-	}
-	if result.Sentry.Environment == "" {
-		result.Sentry.Environment = "production"
 	}
 
 	if result.DB.User == "" {
@@ -86,7 +74,6 @@ func Load() (*Config, error) {
 
 	validate := validator.New(validator.WithRequiredStructEnabled())
 	if err := validate.Struct(result); err != nil {
-		sentry.CaptureException(err)
 		return nil, fmt.Errorf("failed to validate config: %w", err)
 	}
 

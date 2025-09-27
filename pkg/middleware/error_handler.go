@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"shantaram/app/api"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/samber/oops"
 )
@@ -28,6 +29,7 @@ func ErrorHandler(ctx *fiber.Ctx, err error) error {
 
 	switch statusCode {
 	case http.StatusInternalServerError:
+		sentry.CaptureException(err)
 		slog.LogAttrs(ctx.UserContext(), slog.LevelError, "Internal Server Error", slog.Any("error", err))
 	case http.StatusBadRequest:
 		slog.LogAttrs(ctx.UserContext(), slog.LevelError, "Bad Request", slog.Any("error", err))

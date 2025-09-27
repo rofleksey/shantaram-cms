@@ -17,9 +17,11 @@ import (
 	"shantaram/pkg/middleware"
 	"shantaram/pkg/migration"
 	"shantaram/pkg/routes"
+	"shantaram/pkg/telemetry"
 	"shantaram/pkg/tlog"
 	"time"
 
+	"github.com/exaring/otelpgx"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,9 +41,28 @@ func main() {
 	}
 	do.ProvideValue(di, cfg)
 
+	if err = telemetry.InitSentry(cfg); err != nil {
+		log.Fatalf("sentry init failed: %v", err)
+	}
+
 	if err = tlog.Init(cfg); err != nil {
 		log.Fatalf("logging init failed: %v", err)
 	}
+
+	tel, err := telemetry.Init(cfg)
+	if err != nil {
+		log.Fatalf("telemetry init failed: %v", err)
+	}
+	defer tel.Shutdown(appCtx)
+
+	metrics, err := telemetry.NewMetrics(cfg, tel.Meter)
+	if err != nil {
+		log.Fatalf("metrics init failed: %v", err)
+	}
+	do.ProvideValue(di, metrics)
+
+	tracing := telemetry.NewTracing(cfg, tel.Tracer)
+	do.ProvideValue(di, tracing)
 
 	slog.ErrorContext(appCtx, "Service restarted")
 
@@ -56,12 +77,20 @@ func main() {
 		"statement_timeout":                   "30000",
 		"idle_in_transaction_session_timeout": "60000",
 	}
+	dbConf.ConnConfig.Tracer = otelpgx.NewTracer(
+		otelpgx.WithMeterProvider(tel.MeterProvider),
+		otelpgx.WithTracerProvider(tel.TracerProvider),
+	)
 
 	dbConn, err := pgxpool.NewWithConfig(appCtx, dbConf)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 	defer dbConn.Close()
+
+	if err = otelpgx.RecordStats(dbConn); err != nil {
+		log.Fatalf("unable to record database stats: %v", err)
+	}
 
 	if err = database.InitSchema(appCtx, dbConn); err != nil {
 		log.Fatalf("failed to init schema: %v", err)

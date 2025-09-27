@@ -13,7 +13,7 @@ func (s *Server) Login(ctx context.Context, request api.LoginRequestObject) (api
 		return nil, oops.With("status_code", http.StatusTooManyRequests).New("Too many requests")
 	}
 
-	token, err := s.authService.Login(request.Body.Username, request.Body.Password)
+	token, err := s.authService.Login(ctx, request.Body.Username, request.Body.Password)
 	if err != nil {
 		return nil, err
 	}
