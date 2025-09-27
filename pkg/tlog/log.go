@@ -8,6 +8,7 @@ import (
 	"shantaram/pkg/telemetry"
 
 	slogmulti "github.com/samber/slog-multi"
+	slogtelegram "github.com/samber/slog-telegram/v2"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
@@ -24,6 +25,15 @@ func Init(cfg *config.Config, tel *telemetry.Telemetry) error {
 			otelslog.WithSource(true),
 			otelslog.WithLoggerProvider(tel.LogProvider),
 		))
+	}
+
+	if cfg.Log.Telegram.Token != "" {
+		logHandlers = append(logHandlers, slogtelegram.Option{
+			Level:     slog.LevelError,
+			Token:     cfg.Log.Telegram.Token,
+			Username:  cfg.Log.Telegram.ChatID,
+			AddSource: true,
+		}.NewTelegramHandler())
 	}
 
 	multiHandler := slogmulti.Fanout(logHandlers...)

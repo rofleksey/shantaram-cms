@@ -11,12 +11,19 @@ import (
 )
 
 type Config struct {
-	BaseApiURL   string `yaml:"baseApiURL" validate:"required"`
-	BaseFrontURL string `yaml:"baseFrontURL" validate:"required"`
+	BaseApiURL   string `yaml:"base_api_url" validate:"required"`
+	BaseFrontURL string `yaml:"base_front_url" validate:"required"`
 
 	Sentry struct {
 		DSN string `yaml:"dsn"`
 	} `yaml:"sentry"`
+
+	Log struct {
+		Telegram struct {
+			Token  string `yaml:"token" validate:"required"`
+			ChatID string `yaml:"chat_id" validate:"required"`
+		} `yaml:"telegram"`
+	} `yaml:"log"`
 
 	Telemetry struct {
 		Enabled bool `yaml:"enabled"`
