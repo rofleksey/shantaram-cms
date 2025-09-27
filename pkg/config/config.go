@@ -19,7 +19,7 @@ type Config struct {
 	} `yaml:"sentry"`
 
 	Telemetry struct {
-		OTLPEndpoint string `yaml:"otlp_endpoint"`
+		Enabled bool `yaml:"enabled"`
 	} `yaml:"telemetry"`
 
 	DB struct {

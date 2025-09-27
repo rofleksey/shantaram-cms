@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"shantaram/pkg/util"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 var _ slog.Handler = (*contextHandler)(nil)
@@ -37,5 +39,29 @@ func (h *contextHandler) Handle(ctx context.Context, r slog.Record) error {
 		r.AddAttrs(slog.String("ip", ip))
 	}
 
+	r.AddAttrs(h.extractTelemetry(ctx)...)
+
 	return h.handler.Handle(ctx, r) //nolint: wrapcheck
+}
+
+func (h *contextHandler) extractTelemetry(ctx context.Context) []slog.Attr {
+	span := trace.SpanFromContext(ctx)
+	if !span.IsRecording() {
+		return []slog.Attr{}
+	}
+
+	var attrs []slog.Attr
+	spanCtx := span.SpanContext()
+
+	if spanCtx.HasTraceID() {
+		traceID := trace.SpanFromContext(ctx).SpanContext().TraceID().String()
+		attrs = append(attrs, slog.String("trace_id", traceID))
+	}
+
+	if spanCtx.HasSpanID() {
+		spanID := spanCtx.SpanID().String()
+		attrs = append(attrs, slog.String("span_id", spanID))
+	}
+
+	return attrs
 }

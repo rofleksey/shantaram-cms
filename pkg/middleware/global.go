@@ -19,6 +19,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/samber/do"
+	slogfiber "github.com/samber/slog-fiber"
 )
 
 func FiberMiddleware(app *fiber.App, di *do.Injector) {
@@ -62,21 +63,17 @@ func FiberMiddleware(app *fiber.App, di *do.Injector) {
 	ignorePaths := []string{"/api/healthz"}
 
 	// log requests
-	app.Use(NewLogWithConfig(slog.Default(), LogConfig{
-		WithUserAgent:    true,
-		WithRequestBody:  true,
-		WithResponseBody: true,
-		Filters: []func(*fiber.Ctx) bool{
-			// ignore spam endpoints
+	app.Use(slogfiber.NewWithConfig(slog.Default(), slogfiber.Config{
+		Filters: []slogfiber.Filter{
 			func(c *fiber.Ctx) bool {
 				return !slices.Contains(ignorePaths, c.Path())
 			},
-			// ignore successful GET-s
 			func(ctx *fiber.Ctx) bool {
 				reqMethod := strings.ToLower(string(ctx.Context().Method()))
 				return !(reqMethod == "get" && (ctx.Response().StatusCode() == http.StatusOK || ctx.Response().StatusCode() == http.StatusNotModified || ctx.Response().StatusCode() == http.StatusPartialContent)) //nolint:staticcheck
 			},
 		},
+		WithTraceID: true,
 	}))
 
 	app.Use(recover.New(recover.Config{
@@ -84,7 +81,7 @@ func FiberMiddleware(app *fiber.App, di *do.Injector) {
 		StackTraceHandler: func(ctx *fiber.Ctx, e any) {
 			stackStr := util.TrimSuffixToNRunes(string(debug.Stack()), 2048)
 
-			slog.Error("Panic",
+			slog.ErrorContext(ctx.Context(), "Panic",
 				slog.Any("error", e),
 				slog.String("stack", stackStr),
 			)

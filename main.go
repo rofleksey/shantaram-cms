@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/exaring/otelpgx"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -44,16 +45,17 @@ func main() {
 	if err = telemetry.InitSentry(cfg); err != nil {
 		log.Fatalf("sentry init failed: %v", err)
 	}
-
-	if err = tlog.Init(cfg); err != nil {
-		log.Fatalf("logging init failed: %v", err)
-	}
+	defer sentry.Flush(3 * time.Second)
 
 	tel, err := telemetry.Init(cfg)
 	if err != nil {
 		log.Fatalf("telemetry init failed: %v", err)
 	}
 	defer tel.Shutdown(appCtx)
+
+	if err = tlog.Init(cfg, tel); err != nil {
+		log.Fatalf("logging init failed: %v", err)
+	}
 
 	metrics, err := telemetry.NewMetrics(cfg, tel.Meter)
 	if err != nil {

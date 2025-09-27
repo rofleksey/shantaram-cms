@@ -2,22 +2,22 @@ package telemetry
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"shantaram/pkg/build"
 	"shantaram/pkg/config"
 	"time"
 
 	"github.com/getsentry/sentry-go"
 	sentryotel "github.com/getsentry/sentry-go/otel"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/exporters/prometheus"
+	log2 "go.opentelemetry.io/otel/log"
 	otelmetric "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -26,27 +26,29 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 )
 
-var ServiceName = "shantaram-api"
-var MetricsPort = 8081
-
 type Telemetry struct {
 	TracerProvider oteltrace.TracerProvider
 	MeterProvider  otelmetric.MeterProvider
+	LogProvider    *log.LoggerProvider
 	Tracer         oteltrace.Tracer
 	Meter          otelmetric.Meter
+	Logger         log2.Logger
 	Shutdown       func(context.Context) error
 }
 
 func Init(cfg *config.Config) (*Telemetry, error) {
-	if cfg.Telemetry.OTLPEndpoint == "" {
-		noopTracer := noop.NewTracerProvider()
-		noopMeter := sdkmetric.NewMeterProvider()
+	if !cfg.Telemetry.Enabled {
+		noopTracerProvider := noop.NewTracerProvider()
+		noopMeterProvider := sdkmetric.NewMeterProvider()
+		noopLoggerProvider := log.NewLoggerProvider()
 
 		return &Telemetry{
-			TracerProvider: noopTracer,
-			MeterProvider:  noopMeter,
-			Tracer:         noopTracer.Tracer("noop"),
-			Meter:          noopMeter.Meter("noop"),
+			TracerProvider: noopTracerProvider,
+			MeterProvider:  noopMeterProvider,
+			LogProvider:    noopLoggerProvider,
+			Tracer:         noopTracerProvider.Tracer(build.ServiceName),
+			Meter:          noopMeterProvider.Meter(build.ServiceName),
+			Logger:         noopLoggerProvider.Logger(build.ServiceName),
 			Shutdown:       func(context.Context) error { return nil },
 		}, nil
 	}
@@ -55,7 +57,7 @@ func Init(cfg *config.Config) (*Telemetry, error) {
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(ServiceName),
+			semconv.ServiceNameKey.String(build.ServiceName),
 			semconv.ServiceVersionKey.String(build.Tag),
 			semconv.DeploymentEnvironmentKey.String("production"),
 		),
@@ -66,17 +68,23 @@ func Init(cfg *config.Config) (*Telemetry, error) {
 
 	var shutdownFuncs []func(context.Context) error
 
-	tracerProvider, err := initTracerProvider(ctx, res, cfg)
+	tracerProvider, err := initTracerProvider(ctx, res)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize tracer provider: %w", err)
 	}
 	shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
 
-	meterProvider, err := initMeterProvider(ctx, res, cfg)
+	meterProvider, err := initMeterProvider(ctx, res)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize meter provider: %w", err)
 	}
 	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+
+	loggerProvider, err := initLogProvider(ctx, res)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize logger provider: %w", err)
+	}
+	shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
 
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetMeterProvider(meterProvider)
@@ -84,8 +92,9 @@ func Init(cfg *config.Config) (*Telemetry, error) {
 		sentryotel.NewSentryPropagator(),
 	))
 
-	tracer := tracerProvider.Tracer(ServiceName)
-	meter := meterProvider.Meter(ServiceName)
+	tracer := tracerProvider.Tracer(build.ServiceName)
+	meter := meterProvider.Meter(build.ServiceName)
+	logger := loggerProvider.Logger(build.ServiceName)
 
 	shutdown := func(ctx context.Context) error {
 		var errs []error
@@ -105,52 +114,51 @@ func Init(cfg *config.Config) (*Telemetry, error) {
 	return &Telemetry{
 		TracerProvider: tracerProvider,
 		MeterProvider:  meterProvider,
+		LogProvider:    loggerProvider,
 		Tracer:         tracer,
 		Meter:          meter,
+		Logger:         logger,
 		Shutdown:       shutdown,
 	}, nil
 }
 
-func initTracerProvider(ctx context.Context, res *resource.Resource, cfg *config.Config) (*sdktrace.TracerProvider, error) {
-	traceExporter, err := otlptracehttp.New(ctx,
-		otlptracehttp.WithEndpoint(cfg.Telemetry.OTLPEndpoint),
-		otlptracehttp.WithInsecure(),
-	)
+func initTracerProvider(ctx context.Context, res *resource.Resource) (*sdktrace.TracerProvider, error) {
+	traceExporter, err := otlptracehttp.New(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create OTLP trace exporter: %w", err)
 	}
 
 	return sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithBatcher(traceExporter),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(sentryotel.NewSentrySpanProcessor()),
 	), nil
 }
 
-func initMeterProvider(ctx context.Context, res *resource.Resource, cfg *config.Config) (*sdkmetric.MeterProvider, error) {
-	promExporter, err := prometheus.New()
+func initMeterProvider(ctx context.Context, res *resource.Resource) (*sdkmetric.MeterProvider, error) {
+	exporter, err := otlpmetrichttp.New(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Prometheus exporter: %w", err)
+		return nil, fmt.Errorf("failed to create OTLP meter exporter: %w", err)
 	}
 
-	go func() {
-		http.Handle("/metrics", promhttp.Handler())
-		server := &http.Server{
-			Addr:         fmt.Sprintf(":%d", MetricsPort),
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
-		}
-		slog.InfoContext(ctx, "Prometheus metrics server started",
-			slog.String("address", server.Addr),
-		)
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			slog.ErrorContext(ctx, "Prometheus metrics server error", slog.Any("error", err))
-		}
-	}()
-
 	return sdkmetric.NewMeterProvider(
-		sdkmetric.WithReader(promExporter),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter,
+			sdkmetric.WithInterval(time.Minute),
+		)),
 		sdkmetric.WithResource(res),
+	), nil
+}
+
+func initLogProvider(ctx context.Context, res *resource.Resource) (*log.LoggerProvider, error) {
+	exporter, err := otlploghttp.New(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create OTLP logs exporter: %w", err)
+	}
+
+	return log.NewLoggerProvider(
+		log.WithProcessor(log.NewBatchProcessor(exporter)),
+		log.WithResource(res),
 	), nil
 }
 
