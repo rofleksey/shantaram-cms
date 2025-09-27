@@ -223,8 +223,6 @@ github.com/samber/slog-fiber v1.18.1 h1:VC1z+FtEk52nh1EWgT2oE185nIrceCyjXZwMYNjV
 github.com/samber/slog-fiber v1.18.1/go.mod h1:Luk/SVBZmNgzyEGWIZJpSMnczKkFUh8+BXVSJ8WwoXk=
 github.com/samber/slog-multi v1.5.0 h1:UDRJdsdb0R5vFQFy3l26rpX3rL3FEPJTJ2yKVjoiT1I=
 github.com/samber/slog-multi v1.5.0/go.mod h1:im2Zi3mH/ivSY5XDj6LFcKToRIWPw1OcjSVSdXt+2d0=
-github.com/samber/slog-otel v0.1.0 h1:pPK57IyWai31/wj8G8lpDcLEr3DcSeldDNOz7qBuqmA=
-github.com/samber/slog-otel v0.1.0/go.mod h1:spWQPHy48fsyBY3sEcGCQwy2Xa7gHZdpwRUUx+vc/wk=
 github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 h1:KanIMPX0QdEdB4R3CiimCAbxFrhB3j7h0/OvpYGVQa8=
 github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511/go.mod h1:sM7Mt7uEoCeFSCBM+qBrqvEo+/9vdmj19wzp3yzUhmg=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
