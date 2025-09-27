@@ -1,0 +1,977 @@
+openapi: '3.0.4'
+info:
+  contact:
+    name: 'Shantaram'
+    url: 'https://shantaram-spb.ru'
+  title: 'Shantaram API'
+  version: '1.0.0'
+servers:
+  - description: 'API'
+    url: '/v1'
+paths:
+  /healthz:
+    get:
+      summary: 'Health check'
+      operationId: 'healthCheck'
+      responses:
+        '200':
+          description: 'Service is healthy'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /login:
+    post:
+      summary: 'Login'
+      operationId: 'login'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /order:
+    post:
+      summary: 'Create new order'
+      operationId: 'createOrder'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewOrderRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Order created successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /order/setStatus:
+    post:
+      summary: 'Set order status'
+      operationId: 'setOrderStatus'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetOrderStatusRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Order status updated successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /order/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: 'Get order by ID'
+      operationId: 'getOrder'
+      responses:
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+    delete:
+      summary: 'Delete order'
+      operationId: 'deleteOrder'
+      responses:
+        '200':
+          description: 'Order deleted successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /orders:
+    get:
+      summary: 'Get paginated orders'
+      operationId: 'getOrders'
+      parameters:
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /menu:
+    get:
+      summary: 'Get site menu'
+      operationId: 'getMenu'
+      responses:
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MenuResponse'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /menu/ordering:
+    post:
+      summary: 'Set menu ordering'
+      operationId: 'setMenuOrdering'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetMenuOrderingRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Menu ordered successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /menu/productGroup/ordering:
+    post:
+      summary: 'Set product group ordering'
+      operationId: 'setProductGroupOrdering'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetProductGroupOrderingRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Menu ordered successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /menu/productGroup:
+    post:
+      summary: 'Add product group'
+      operationId: 'addProductGroup'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddProductGroupRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Product group added successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /menu/product:
+    post:
+      summary: 'Add product'
+      operationId: 'addProduct'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddProductRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Product added successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /menu/productGroup/{productGroupId}:
+    parameters:
+      - name: productGroupId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: 'Edit product group'
+      operationId: 'editProductGroup'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditProductGroupRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Product group updated successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+    delete:
+      summary: 'Delete product group'
+      operationId: 'deleteProductGroup'
+      responses:
+        '200':
+          description: 'Product group deleted successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /menu/product/{productId}:
+    parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      summary: 'Edit product'
+      operationId: 'editProduct'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditProductRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Product updated successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+    delete:
+      summary: 'Delete product'
+      operationId: 'deleteProduct'
+      responses:
+        '200':
+          description: 'Product deleted successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+components:
+  schemas:
+    General:
+      properties:
+        error:
+          type: boolean
+        msg:
+          type: string
+        statusCode:
+          type: 'integer'
+          x-omitempty: true
+      required:
+        - error
+        - msg
+        - statusCode
+      type: object
+
+    LoginRequest:
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+      type: object
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+        - token
+
+    SetOrderStatusRequest:
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+      required:
+        - id
+        - status
+      type: object
+
+    NewOrderRequest:
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+        comment:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewOrderItem'
+      required:
+        - id
+        - name
+        - phone
+        - items
+      type: object
+
+    NewOrderItem:
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+      required:
+        - id
+        - amount
+      type: object
+
+    OrderStatus:
+      type: string
+      enum:
+        - open
+        - closed
+        - cancelled
+
+    Order:
+      properties:
+        id:
+          type: string
+          format: uuid
+        index:
+          type: integer
+        tableID:
+          type: string
+        created:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        clientName:
+          type: string
+        clientPhone:
+          type: string
+        clientComment:
+          type: string
+        seen:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+      required:
+        - id
+        - index
+        - created
+        - status
+        - clientName
+        - clientPhone
+        - seen
+        - items
+      type: object
+
+    OrderItem:
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        price:
+          type: number
+          format: float
+        amount:
+          type: integer
+      required:
+        - id
+        - title
+        - price
+        - amount
+      type: object
+
+    OrdersResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        totalCount:
+          type: integer
+      required:
+        - data
+        - totalCount
+
+    MenuResponse:
+      type: object
+      properties:
+        menus:
+          type: array
+          items:
+            $ref: '#/components/schemas/Menu'
+      required:
+        - menus
+
+    Menu:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductGroup'
+      required:
+        - id
+        - title
+        - groups
+
+    ProductGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+      required:
+        - id
+        - menuId
+        - title
+        - products
+        - created
+        - updated
+
+    AddProductGroupRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        menuId:
+          type: string
+        title:
+          type: string
+      required:
+        - id
+        - menuId
+        - title
+
+    EditProductGroupRequest:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        available:
+          type: boolean
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+      required:
+        - id
+        - menuId
+        - title
+        - description
+        - price
+        - available
+        - created
+        - updated
+
+    AddProductRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+          minimum: 0.0
+        available:
+          type: boolean
+      required:
+        - id
+        - groupId
+        - title
+        - description
+        - price
+        - available
+
+    EditProductRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+          minimum: 0.0
+        available:
+          type: boolean
+      required:
+        - title
+        - description
+        - price
+        - available
+
+    SetMenuOrderingRequest:
+      type: object
+      properties:
+        menuId:
+          type: string
+        productGroupIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+        - menuId
+        - productGroupIds
+
+    SetProductGroupOrderingRequest:
+      type: object
+      properties:
+        productGroupId:
+          type: string
+          format: uuid
+        productIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+        - productGroupId
+        - productIds
+
+    WsOrdersChangedMessage:
+      properties:
+        event:
+          enum:
+            - 'orders_changed'
+          type: 'string'
+        id:
+          type: 'string'
+          x-oapi-codegen-extra-tags:
+            exhaustruct: 'optional'
+      required:
+        - 'event'
+        - 'id'
+      type: 'object'
+
+    WsMenuChangedMessage:
+      properties:
+        event:
+          enum:
+            - 'menu_changed'
+          type: 'string'
+        id:
+          type: 'string'
+          x-oapi-codegen-extra-tags:
+            exhaustruct: 'optional'
+      required:
+        - 'event'
+        - 'id'
+      type: 'object'
+
+    WsMessage:
+      discriminator:
+        mapping:
+          orders_changed: '#/components/schemas/WsOrdersChangedMessage'
+          menu_changed: '#/components/schemas/WsMenuChangedMessage'
+        propertyName: 'event'
+      oneOf:
+        - $ref: '#/components/schemas/WsOrdersChangedMessage'
+        - $ref: '#/components/schemas/WsMenuChangedMessage'
+      properties:
+        event:
+          type: 'string'
+        id:
+          type: 'string'
+          x-oapi-codegen-extra-tags:
+            exhaustruct: 'optional'
+      required:
+        - 'event'
+        - 'id'
+      type: 'object'

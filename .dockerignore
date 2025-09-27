@@ -1,5 +1,13 @@
-.idea
+.idea/
+data/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+shantaram
+**/node_modules
+scripts
 config.yaml
-data
-shantaram-cms.exe
-shantaram-cms

@@ -2,80 +2,112 @@ package main
 
 import (
 	"context"
-	"github.com/gofiber/fiber/v2"
-	_ "go.uber.org/automaxprocs"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"shantaram-cms/app/controller"
-	"shantaram-cms/app/service"
-	"shantaram-cms/pkg/config"
-	"shantaram-cms/pkg/database"
-	"shantaram-cms/pkg/middleware"
-	"shantaram-cms/pkg/routes"
+	"shantaram/app/api"
+	"shantaram/app/controller"
+	"shantaram/app/service/auth"
+	"shantaram/app/service/limits"
+	"shantaram/app/service/menu"
+	"shantaram/app/service/order"
+	"shantaram/app/service/pubsub"
+	"shantaram/pkg/config"
+	"shantaram/pkg/database"
+	"shantaram/pkg/middleware"
+	"shantaram/pkg/migration"
+	"shantaram/pkg/routes"
+	"shantaram/pkg/tlog"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/samber/do"
 )
 
 func main() {
 	appCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	os.RemoveAll(filepath.Join("data", "temp"))
-
-	os.MkdirAll(filepath.Join("data", "uploads"), os.ModePerm)
-	os.MkdirAll(filepath.Join("data", "temp"), os.ModePerm)
-
-	exitChan := make(chan struct{})
+	di := do.New()
+	do.ProvideValue(di, appCtx)
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load config: %s", err.Error())
+		log.Fatalf("config load failed: %v", err)
+	}
+	do.ProvideValue(di, cfg)
+
+	if err = tlog.Init(cfg); err != nil {
+		log.Fatalf("logging init failed: %v", err)
 	}
 
-	db, err := database.New()
+	slog.ErrorContext(appCtx, "Service restarted")
+
+	dbConnStr := "postgres://" + cfg.DB.User + ":" + cfg.DB.Pass + "@" + cfg.DB.Host + "/" + cfg.DB.Database + "?sslmode=disable&pool_max_conns=30&pool_min_conns=5&pool_max_conn_lifetime=1h&pool_max_conn_idle_time=30m&pool_health_check_period=1m&connect_timeout=10"
+
+	dbConf, err := pgxpool.ParseConfig(dbConnStr)
 	if err != nil {
-		log.Fatalf("failed to connect database: %s", err.Error())
-	}
-	defer db.Close()
-
-	if err := db.Init(); err != nil {
-		log.Fatalf("failed to init database: %s", err.Error())
+		log.Fatalf("pgxpool.ParseConfig() failed: %v", err)
 	}
 
-	telegramService, err := service.NewTelegram(appCtx, cfg)
+	dbConf.ConnConfig.RuntimeParams = map[string]string{
+		"statement_timeout":                   "30000",
+		"idle_in_transaction_session_timeout": "60000",
+	}
+
+	dbConn, err := pgxpool.NewWithConfig(appCtx, dbConf)
 	if err != nil {
-		log.Fatalf("failed to init telegram: %v", err)
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer dbConn.Close()
+
+	if err = database.InitSchema(appCtx, dbConn); err != nil {
+		log.Fatalf("failed to init schema: %v", err)
 	}
 
-	wsService := service.NewWebSocket()
-	authService := service.NewAuth(cfg)
-	pageService := service.NewPage(db)
-	uploadsService := service.NewUploads(appCtx)
-	fileService := service.NewFile(db, uploadsService)
-	captchaService := service.NewCaptcha()
-	orderService := service.NewOrder(db, captchaService, telegramService, wsService)
-	generalService := service.NewGeneral(db)
-	statsService := service.NewStats(db)
+	do.ProvideValue(di, dbConn)
 
-	healthController := controller.NewHealth()
-	sitemapController := controller.NewSitemap(db, pageService)
-	authController := controller.NewAuth(authService)
-	pageController := controller.NewPage(pageService)
-	fileController := controller.NewFile(fileService, uploadsService)
-	orderController := controller.NewOrder(orderService)
-	captchaController := controller.NewCaptcha(captchaService)
-	generalController := controller.NewGeneral(generalService)
-	wsController := controller.NewWebSocket(wsService)
-	statsController := controller.NewStats(statsService)
+	queries := database.New(dbConn)
+	do.ProvideValue(di, queries)
+
+	if err = migration.Migrate(appCtx, di); err != nil {
+		log.Fatalf("failed to migrate: %v", err)
+	}
+
+	do.Provide(di, pubsub.New)
+	do.Provide(di, auth.New)
+	do.Provide(di, limits.New)
+	do.Provide(di, menu.New)
+	do.Provide(di, order.New)
+
+	wsController := controller.NewWS(di)
+
+	server := controller.NewStrictServer(di)
+	handler := api.NewStrictHandler(server, nil)
 
 	app := fiber.New(fiber.Config{
-		BodyLimit: 1024 * 1024 * 100, // 100 mb
+		AppName:          "Shantaram API",
+		ErrorHandler:     middleware.ErrorHandler,
+		ProxyHeader:      "X-Forwarded-For",
+		ReadTimeout:      time.Second * 60,
+		WriteTimeout:     time.Second * 60,
+		DisableKeepalive: false,
 	})
 
-	middleware.FiberMiddleware(app, cfg)
+	middleware.FiberMiddleware(app, di)
 	routes.StaticRoutes(app)
-	routes.PublicRoutes(healthController, sitemapController, authController, pageController, fileController,
-		orderController, captchaController, generalController, wsController, statsController, app)
+	routes.WSRoutes(app, wsController)
+
+	apiGroup := app.Group("/v1")
+	api.RegisterHandlersWithOptions(apiGroup, handler, api.FiberServerOptions{
+		BaseURL: "",
+		Middlewares: []api.MiddlewareFunc{
+			middleware.NewOpenAPIValidator(),
+		},
+	})
+
 	routes.NotFoundRoute(app)
 
 	go func() {
@@ -83,23 +115,17 @@ func main() {
 		signal.Notify(sigint, os.Interrupt)
 		<-sigint
 
-		log.Println("Shutting down server...")
+		log.Info("Shutting down server...")
 
-		if err := app.Shutdown(); err != nil {
-			log.Printf("Server is shutting down! Reason: %v", err)
-		}
-
-		close(exitChan)
+		_ = app.Shutdown()
+		cancel()
 	}()
 
+	log.Info("Server started on port 8080")
 	if err := app.Listen(":8080"); err != nil {
-		log.Printf("Server stopped! Reason: %v", err)
+		log.Warnf("Server stopped! Reason: %v", err)
 	}
 
-	<-exitChan
-	cancel()
-
-	log.Println("Waiting for services to finish...")
-
-	uploadsService.CancelAndJoin()
+	log.Info("Waiting for services to finish...")
+	_ = di.Shutdown()
 }

@@ -1,59 +1,22 @@
 package controller
 
 import (
-	"errors"
-	"fmt"
-	"github.com/gofiber/fiber/v2"
+	"context"
 	"net/http"
-	"shantaram-cms/app/dao"
-	"shantaram-cms/app/service"
-	"shantaram-cms/pkg/util"
+	"shantaram/app/api"
+
+	"github.com/samber/oops"
 )
 
-type Auth struct {
-	authService *service.Auth
-}
-
-func NewAuth(
-	authService *service.Auth,
-) *Auth {
-	return &Auth{
-		authService: authService,
-	}
-}
-
-func (c *Auth) Login(ctx *fiber.Ctx) error {
-	var req dao.LoginRequest
-
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(dao.NoDataResponse{
-			Error: true,
-			Msg:   fmt.Sprintf("failed to parse body: %v", err),
-		})
+func (s *Server) Login(ctx context.Context, request api.LoginRequestObject) (api.LoginResponseObject, error) {
+	if !s.limitsService.AllowIpRpm(ctx, "login", 5) {
+		return nil, oops.With("status_code", http.StatusTooManyRequests).New("Too many requests")
 	}
 
-	token, err := c.authService.AuthAdmin(req.Pass)
+	token, err := s.authService.Login(request.Body.Username, request.Body.Password)
 	if err != nil {
-		if errors.Is(err, util.ErrInvalidCredentials) {
-			return ctx.Status(http.StatusUnauthorized).JSON(dao.NoDataResponse{
-				Error: true,
-				Msg:   fmt.Sprintf("не удалось войти: %v", err),
-			})
-		}
-
-		return ctx.Status(http.StatusInternalServerError).JSON(dao.NoDataResponse{
-			Error: true,
-			Msg:   fmt.Sprintf("не удалось войти: %v", err),
-		})
+		return nil, err
 	}
 
-	return ctx.JSON(dao.SuccessResponse[dao.LoginResponse]{
-		Error: false,
-		Data: dao.LoginResponse{
-			ID:       1,
-			Username: "admin",
-			Roles:    []string{"admin"},
-			Token:    token,
-		},
-	})
+	return api.Login200JSONResponse{Token: token}, nil
 }

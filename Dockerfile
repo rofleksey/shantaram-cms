@@ -1,14 +1,16 @@
-FROM golang:1.23-alpine AS apiBuilder
+FROM golang:1.25-alpine AS apiBuilder
 WORKDIR /opt
-COPY go.mod go.sum /opt/
-RUN go mod download
+RUN apk update && apk add --no-cache make
 COPY . /opt/
-RUN go build -o ./shantaram-cms
+RUN go mod download
+ARG GIT_TAG=?
+RUN make build GIT_TAG=${GIT_TAG}
 
-FROM node:18-alpine
-ENV ENVIRONMENT=production
+FROM alpine
+ARG ENVIRONMENT=production
 WORKDIR /opt
 RUN apk update && apk add --no-cache curl ca-certificates
-COPY --from=apiBuilder /opt/shantaram-cms /opt/shantaram-cms
+COPY --from=apiBuilder /opt/shantaram /opt/shantaram
 EXPOSE 8080
-CMD [ "./shantaram-cms" ]
+RUN ulimit -n 100000
+CMD [ "./shantaram" ]
