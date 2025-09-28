@@ -81,3 +81,15 @@ func (s *Server) GetOrders(ctx context.Context, req api.GetOrdersRequestObject) 
 		TotalCount: int(totalCount),
 	}, nil
 }
+
+func (s *Server) MarkOrderSeen(ctx context.Context, req api.MarkOrderSeenRequestObject) (api.MarkOrderSeenResponseObject, error) {
+	if !s.authService.IsAdmin(ctx) {
+		return nil, oops.With("status_code", http.StatusUnauthorized).Errorf("Unauthorized")
+	}
+
+	if err := s.orderService.MarkOrderSeen(ctx, req.Body.Id); err != nil {
+		return nil, fmt.Errorf("MarkOrderSeen: %w", err)
+	}
+
+	return api.MarkOrderSeen200Response{}, nil
+}

@@ -168,3 +168,16 @@ func (s *Service) GetOrdersPaginated(ctx context.Context, offset, limit int) ([]
 
 	return orders, totalCount, nil
 }
+
+func (s *Service) MarkOrderSeen(ctx context.Context, id uuid.UUID) error {
+	ctx, span := s.tracing.StartServiceSpan(ctx, serviceName, "mark_order_seen")
+	defer span.End()
+
+	if err := s.queries.SetOrderSeen(ctx, id); err != nil {
+		return s.tracing.Error(span, fmt.Errorf("SetOrderSeen: %w", err))
+	}
+
+	s.tracing.Success(span)
+
+	return nil
+}

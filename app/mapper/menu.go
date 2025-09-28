@@ -97,7 +97,7 @@ func OrderToNotificationText(o database.Order) string {
 	builder.WriteString("Сумма: ")
 	builder.WriteString(fmt.Sprintf("%.2f", totalPrice))
 	builder.WriteString(" ₽\n\n")
-	builder.WriteString("https://admin.shantaram-spb.ru/#/order?id=")
+	builder.WriteString("https://admin.shantaram-spb.ru/#/order/")
 	builder.WriteString(o.ID.String())
 
 	return builder.String()

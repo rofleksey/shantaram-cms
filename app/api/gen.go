@@ -87,6 +87,11 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
+// MarkOrderSeenRequest defines model for MarkOrderSeenRequest.
+type MarkOrderSeenRequest struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
 // Menu defines model for Menu.
 type Menu struct {
 	Groups []ProductGroup `json:"groups"`
@@ -237,6 +242,9 @@ type EditProductGroupJSONRequestBody = EditProductGroupRequest
 
 // CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
 type CreateOrderJSONRequestBody = NewOrderRequest
+
+// MarkOrderSeenJSONRequestBody defines body for MarkOrderSeen for application/json ContentType.
+type MarkOrderSeenJSONRequestBody = MarkOrderSeenRequest
 
 // SetOrderStatusJSONRequestBody defines body for SetOrderStatus for application/json ContentType.
 type SetOrderStatusJSONRequestBody = SetOrderStatusRequest
@@ -417,6 +425,9 @@ type ServerInterface interface {
 	// Create new order
 	// (POST /order)
 	CreateOrder(c *fiber.Ctx) error
+	// Mark order as seen
+	// (POST /order/seen)
+	MarkOrderSeen(c *fiber.Ctx) error
 	// Set order status
 	// (POST /order/setStatus)
 	SetOrderStatus(c *fiber.Ctx) error
@@ -550,6 +561,12 @@ func (siw *ServerInterfaceWrapper) CreateOrder(c *fiber.Ctx) error {
 	return siw.Handler.CreateOrder(c)
 }
 
+// MarkOrderSeen operation middleware
+func (siw *ServerInterfaceWrapper) MarkOrderSeen(c *fiber.Ctx) error {
+
+	return siw.Handler.MarkOrderSeen(c)
+}
+
 // SetOrderStatus operation middleware
 func (siw *ServerInterfaceWrapper) SetOrderStatus(c *fiber.Ctx) error {
 
@@ -663,6 +680,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Put(options.BaseURL+"/menu/productGroup/:productGroupId", wrapper.EditProductGroup)
 
 	router.Post(options.BaseURL+"/order", wrapper.CreateOrder)
+
+	router.Post(options.BaseURL+"/order/seen", wrapper.MarkOrderSeen)
 
 	router.Post(options.BaseURL+"/order/setStatus", wrapper.SetOrderStatus)
 
@@ -1255,6 +1274,49 @@ func (response CreateOrder500JSONResponse) VisitCreateOrderResponse(ctx *fiber.C
 	return ctx.JSON(&response)
 }
 
+type MarkOrderSeenRequestObject struct {
+	Body *MarkOrderSeenJSONRequestBody
+}
+
+type MarkOrderSeenResponseObject interface {
+	VisitMarkOrderSeenResponse(ctx *fiber.Ctx) error
+}
+
+type MarkOrderSeen200Response struct {
+}
+
+func (response MarkOrderSeen200Response) VisitMarkOrderSeenResponse(ctx *fiber.Ctx) error {
+	ctx.Status(200)
+	return nil
+}
+
+type MarkOrderSeen400JSONResponse General
+
+func (response MarkOrderSeen400JSONResponse) VisitMarkOrderSeenResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(400)
+
+	return ctx.JSON(&response)
+}
+
+type MarkOrderSeen401JSONResponse General
+
+func (response MarkOrderSeen401JSONResponse) VisitMarkOrderSeenResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(401)
+
+	return ctx.JSON(&response)
+}
+
+type MarkOrderSeen500JSONResponse General
+
+func (response MarkOrderSeen500JSONResponse) VisitMarkOrderSeenResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(500)
+
+	return ctx.JSON(&response)
+}
+
 type SetOrderStatusRequestObject struct {
 	Body *SetOrderStatusJSONRequestBody
 }
@@ -1494,6 +1556,9 @@ type StrictServerInterface interface {
 	// Create new order
 	// (POST /order)
 	CreateOrder(ctx context.Context, request CreateOrderRequestObject) (CreateOrderResponseObject, error)
+	// Mark order as seen
+	// (POST /order/seen)
+	MarkOrderSeen(ctx context.Context, request MarkOrderSeenRequestObject) (MarkOrderSeenResponseObject, error)
 	// Set order status
 	// (POST /order/setStatus)
 	SetOrderStatus(ctx context.Context, request SetOrderStatusRequestObject) (SetOrderStatusResponseObject, error)
@@ -1877,6 +1942,37 @@ func (sh *strictHandler) CreateOrder(ctx *fiber.Ctx) error {
 	return nil
 }
 
+// MarkOrderSeen operation middleware
+func (sh *strictHandler) MarkOrderSeen(ctx *fiber.Ctx) error {
+	var request MarkOrderSeenRequestObject
+
+	var body MarkOrderSeenJSONRequestBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.Body = &body
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.MarkOrderSeen(ctx.UserContext(), request.(MarkOrderSeenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MarkOrderSeen")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(MarkOrderSeenResponseObject); ok {
+		if err := validResponse.VisitMarkOrderSeenResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // SetOrderStatus operation middleware
 func (sh *strictHandler) SetOrderStatus(ctx *fiber.Ctx) error {
 	var request SetOrderStatusRequestObject
@@ -1992,36 +2088,37 @@ func (sh *strictHandler) GetOrders(ctx *fiber.Ctx, params GetOrdersParams) error
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"duwHlif3F2Rzu/krAAD//9XdstbxQQAA",
+	"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",
+	"AAAA//+wai2e7EQAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

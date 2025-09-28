@@ -123,6 +123,38 @@ paths:
                 $ref: '#/components/schemas/General'
           description: 'Internal Server Error'
 
+  /order/seen:
+    post:
+      summary: 'Mark order as seen'
+      operationId: 'markOrderSeen'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkOrderSeenRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Order status updated successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
   /order/{id}:
     parameters:
       - name: id
@@ -631,6 +663,15 @@ components:
       required:
         - id
         - status
+      type: object
+
+    MarkOrderSeenRequest:
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+        - id
       type: object
 
     NewOrderRequest:
