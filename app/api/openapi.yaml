@@ -721,7 +721,7 @@ components:
           type: string
         price:
           type: number
-          format: float
+          format: double
         amount:
           type: integer
       required:
@@ -831,7 +831,7 @@ components:
           type: string
         price:
           type: number
-          format: float
+          format: double
         available:
           type: boolean
         created:
@@ -865,7 +865,7 @@ components:
           type: string
         price:
           type: number
-          format: float
+          format: double
           minimum: 0.0
         available:
           type: boolean
@@ -886,7 +886,7 @@ components:
           type: string
         price:
           type: number
-          format: float
+          format: double
           minimum: 0.0
         available:
           type: boolean

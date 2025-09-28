@@ -12,6 +12,7 @@ import (
 	"shantaram/app/service/menu"
 	"shantaram/app/service/order"
 	"shantaram/app/service/pubsub"
+	"shantaram/app/service/telegram"
 	"shantaram/pkg/config"
 	"shantaram/pkg/database"
 	"shantaram/pkg/middleware"
@@ -52,6 +53,7 @@ func main() {
 		log.Fatalf("telemetry init failed: %v", err)
 	}
 	defer tel.Shutdown(appCtx)
+	do.ProvideValue(di, tel)
 
 	if err = tlog.Init(cfg, tel); err != nil {
 		log.Fatalf("logging init failed: %v", err)
@@ -110,6 +112,7 @@ func main() {
 	do.Provide(di, pubsub.New)
 	do.Provide(di, auth.New)
 	do.Provide(di, limits.New)
+	do.Provide(di, telegram.New)
 	do.Provide(di, menu.New)
 	do.Provide(di, order.New)
 

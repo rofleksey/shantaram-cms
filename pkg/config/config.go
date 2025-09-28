@@ -20,8 +20,8 @@ type Config struct {
 
 	Log struct {
 		Telegram struct {
-			Token  string `yaml:"token" validate:"required"`
-			ChatID string `yaml:"chat_id" validate:"required"`
+			Token  string `yaml:"token"`
+			ChatID string `yaml:"chat_id"`
 		} `yaml:"telegram"`
 	} `yaml:"log"`
 
@@ -43,6 +43,11 @@ type Config struct {
 	Admin struct {
 		Password string `yaml:"password" validate:"required"`
 	} `yaml:"admin"`
+
+	Telegram struct {
+		Token   string   `yaml:"token" validate:"required"`
+		ChatIds []string `yaml:"chat_ids" validate:"required"`
+	} `yaml:"telegram"`
 }
 
 func Load() (*Config, error) {

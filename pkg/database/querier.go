@@ -25,7 +25,8 @@ type Querier interface {
 	//
 	//  INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
 	//  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	CreateOrder(ctx context.Context, arg CreateOrderParams) error
+	//  RETURNING id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	//CreateProduct
 	//
 	//  INSERT INTO products (id, group_id, title, description, price, index)
@@ -66,7 +67,7 @@ type Querier interface {
 	//
 	//  SELECT id, group_id, index, title, description, price, available, created, updated
 	//  FROM products
-	//  ORDER BY index, group_id
+	//  ORDER BY available DESC, index, group_id
 	GetAllProducts(ctx context.Context) ([]Product, error)
 	//GetMenus
 	//

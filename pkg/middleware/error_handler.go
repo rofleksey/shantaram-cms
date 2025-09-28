@@ -33,6 +33,8 @@ func ErrorHandler(ctx *fiber.Ctx, err error) error {
 		slog.LogAttrs(ctx.UserContext(), slog.LevelError, "Internal Server Error", slog.Any("error", err))
 	case http.StatusBadRequest:
 		slog.LogAttrs(ctx.UserContext(), slog.LevelError, "Bad Request", slog.Any("error", err))
+	case http.StatusNotFound:
+		slog.LogAttrs(ctx.UserContext(), slog.LevelError, "Not Found", slog.Any("error", err))
 	case http.StatusForbidden:
 		slog.LogAttrs(ctx.UserContext(), slog.LevelError, "Forbidden", slog.Any("error", err))
 	}

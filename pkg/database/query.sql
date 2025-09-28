@@ -1,6 +1,7 @@
--- name: CreateOrder :exec
+-- name: CreateOrder :one
 INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING *;
 
 -- name: GetOrderByID :one
 SELECT *
@@ -90,7 +91,7 @@ ORDER BY index;
 -- name: GetAllProducts :many
 SELECT *
 FROM products
-ORDER BY index, group_id;
+ORDER BY available DESC, index, group_id;
 
 -- name: UpdateProduct :exec
 UPDATE products

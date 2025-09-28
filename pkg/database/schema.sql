@@ -35,14 +35,14 @@ CREATE TABLE IF NOT EXISTS product_groups
 CREATE TABLE IF NOT EXISTS products
 (
     id          UUID PRIMARY KEY,
-    group_id    UUID         NOT NULL REFERENCES product_groups (id) ON DELETE CASCADE,
-    index       INTEGER      NOT NULL CHECK (index >= 0),
-    title       VARCHAR(255) NOT NULL,
-    description TEXT         NOT NULL,
-    price       REAL         NOT NULL CHECK (price >= 0.0),
-    available   BOOLEAN      NOT NULL DEFAULT true,
-    created     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    group_id    UUID             NOT NULL REFERENCES product_groups (id) ON DELETE CASCADE,
+    index       INTEGER          NOT NULL CHECK (index >= 0),
+    title       VARCHAR(255)     NOT NULL,
+    description TEXT             NOT NULL,
+    price       DOUBLE PRECISION NOT NULL CHECK (price >= 0.0),
+    available   BOOLEAN          NOT NULL DEFAULT true,
+    created     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated     TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT products_order UNIQUE (group_id, index) DEFERRABLE INITIALLY DEFERRED
 );
 

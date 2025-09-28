@@ -42,7 +42,7 @@ type Product struct {
 	Index       int32
 	Title       string
 	Description string
-	Price       float32
+	Price       float64
 	Available   bool
 	Created     time.Time
 	Updated     time.Time

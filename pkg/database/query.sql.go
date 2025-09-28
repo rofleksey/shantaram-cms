@@ -50,9 +50,10 @@ func (q *Queries) CreateMigration(ctx context.Context, arg CreateMigrationParams
 	return id, err
 }
 
-const createOrder = `-- name: CreateOrder :exec
+const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
 `
 
 type CreateOrderParams struct {
@@ -70,8 +71,9 @@ type CreateOrderParams struct {
 //
 //	INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
 //	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) error {
-	_, err := q.db.Exec(ctx, createOrder,
+//	RETURNING id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
+	row := q.db.QueryRow(ctx, createOrder,
 		arg.ID,
 		arg.TableID,
 		arg.ClientName,
@@ -81,7 +83,21 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) error 
 		arg.Seen,
 		arg.Items,
 	)
-	return err
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.Index,
+		&i.TableID,
+		&i.Created,
+		&i.Updated,
+		&i.Status,
+		&i.ClientName,
+		&i.ClientPhone,
+		&i.ClientComment,
+		&i.Seen,
+		&i.Items,
+	)
+	return i, err
 }
 
 const createProduct = `-- name: CreateProduct :exec
@@ -95,7 +111,7 @@ type CreateProductParams struct {
 	GroupID     uuid.UUID
 	Title       string
 	Description string
-	Price       float32
+	Price       float64
 }
 
 // CreateProduct
@@ -225,14 +241,14 @@ func (q *Queries) GetAllProductGroups(ctx context.Context) ([]ProductGroup, erro
 const getAllProducts = `-- name: GetAllProducts :many
 SELECT id, group_id, index, title, description, price, available, created, updated
 FROM products
-ORDER BY index, group_id
+ORDER BY available DESC, index, group_id
 `
 
 // GetAllProducts
 //
 //	SELECT id, group_id, index, title, description, price, available, created, updated
 //	FROM products
-//	ORDER BY index, group_id
+//	ORDER BY available DESC, index, group_id
 func (q *Queries) GetAllProducts(ctx context.Context) ([]Product, error) {
 	rows, err := q.db.Query(ctx, getAllProducts)
 	if err != nil {
@@ -624,7 +640,7 @@ type UpdateProductParams struct {
 	ID          uuid.UUID
 	Title       string
 	Description string
-	Price       float32
+	Price       float64
 	Available   bool
 }
 

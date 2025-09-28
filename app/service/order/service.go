@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"shantaram/app/api"
+	"shantaram/app/mapper"
 	"shantaram/app/service/pubsub"
+	"shantaram/app/service/telegram"
 	"shantaram/pkg/config"
 	"shantaram/pkg/database"
 	"shantaram/pkg/telemetry"
@@ -21,24 +23,26 @@ import (
 var serviceName = "order"
 
 var maxPositions = 10
-var maxPrice float32 = 99999
+var maxPrice = 99999.0
 var maxAmount = 10
 
 type Service struct {
-	cfg           *config.Config
-	dbConn        *pgxpool.Pool
-	queries       *database.Queries
-	pubsubService *pubsub.Service
-	tracing       *telemetry.Tracing
+	cfg             *config.Config
+	dbConn          *pgxpool.Pool
+	queries         *database.Queries
+	pubsubService   *pubsub.Service
+	telegramService *telegram.Service
+	tracing         *telemetry.Tracing
 }
 
 func New(di *do.Injector) (*Service, error) {
 	return &Service{
-		cfg:           do.MustInvoke[*config.Config](di),
-		dbConn:        do.MustInvoke[*pgxpool.Pool](di),
-		queries:       do.MustInvoke[*database.Queries](di),
-		pubsubService: do.MustInvoke[*pubsub.Service](di),
-		tracing:       do.MustInvoke[*telemetry.Tracing](di),
+		cfg:             do.MustInvoke[*config.Config](di),
+		dbConn:          do.MustInvoke[*pgxpool.Pool](di),
+		queries:         do.MustInvoke[*database.Queries](di),
+		pubsubService:   do.MustInvoke[*pubsub.Service](di),
+		telegramService: do.MustInvoke[*telegram.Service](di),
+		tracing:         do.MustInvoke[*telemetry.Tracing](di),
 	}, nil
 }
 
@@ -50,7 +54,7 @@ func (s *Service) CreateOrder(ctx context.Context, req *api.NewOrderRequest) err
 		return s.tracing.Error(span, oops.With("status_code", http.StatusBadRequest).New("too many items"))
 	}
 
-	var totalPrice float32
+	var totalPrice float64
 
 	orderItems := make([]api.OrderItem, 0, len(req.Items))
 	for _, newItem := range req.Items {
@@ -71,7 +75,7 @@ func (s *Service) CreateOrder(ctx context.Context, req *api.NewOrderRequest) err
 		return s.tracing.Error(span, oops.With("status_code", http.StatusBadRequest).New("too many items"))
 	}
 
-	if err := s.queries.CreateOrder(ctx, database.CreateOrderParams{
+	dbOrder, err := s.queries.CreateOrder(ctx, database.CreateOrderParams{
 		ID:            req.Id,
 		TableID:       nil,
 		ClientName:    req.Name,
@@ -80,11 +84,14 @@ func (s *Service) CreateOrder(ctx context.Context, req *api.NewOrderRequest) err
 		Status:        api.OrderStatusOpen,
 		Seen:          false,
 		Items:         orderItems,
-	}); err != nil {
+	})
+	if err != nil {
 		return s.tracing.Error(span, fmt.Errorf("CreateOrder: %w", err))
 	}
 
-	// TODO: send message to telegram
+	msg := mapper.OrderToNotificationText(dbOrder)
+	go s.telegramService.Notify(msg)
+
 	s.pubsubService.NotifyOrdersChanged()
 	s.tracing.Success(span)
 

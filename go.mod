@@ -26,9 +26,11 @@ require (
 	github.com/exaring/otelpgx v0.9.3
 	github.com/getsentry/sentry-go v0.35.3
 	github.com/getsentry/sentry-go/otel v0.35.3
+	github.com/go-telegram/bot v1.17.0
 	github.com/gofiber/contrib/otelfiber/v2 v2.2.3
 	github.com/samber/slog-fiber v1.18.1
 	github.com/samber/slog-multi v1.5.0
+	github.com/samber/slog-telegram/v2 v2.4.2
 	go.opentelemetry.io/contrib/bridges/otelslog v0.13.0
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.14.0
@@ -98,7 +100,6 @@ require (
 	github.com/riza-io/grpc-go v0.2.0 // indirect
 	github.com/samber/lo v1.51.0 // indirect
 	github.com/samber/slog-common v0.19.0 // indirect
-	github.com/samber/slog-telegram/v2 v2.4.2 // indirect
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
