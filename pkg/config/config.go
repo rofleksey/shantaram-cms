@@ -11,9 +11,10 @@ import (
 )
 
 type Config struct {
-	BaseApiURL   string `yaml:"base_api_url" validate:"required"`
-	BaseFrontURL string `yaml:"base_front_url" validate:"required"`
-	BaseAdminURL string `yaml:"base_admin_url" validate:"required"`
+	BaseApiURL      string `yaml:"base_api_url" validate:"required"`
+	BaseFrontURL    string `yaml:"base_front_url" validate:"required"`
+	BaseWWWFrontURL string `yaml:"base_www_front_url" validate:"required"`
+	BaseAdminURL    string `yaml:"base_admin_url" validate:"required"`
 
 	Sentry struct {
 		DSN string `yaml:"dsn"`
@@ -70,6 +71,9 @@ func Load() (*Config, error) {
 	}
 	if result.BaseFrontURL == "" {
 		result.BaseFrontURL = "https://shantaram-spb.ru"
+	}
+	if result.BaseWWWFrontURL == "" {
+		result.BaseWWWFrontURL = "https://www.shantaram-spb.ru"
 	}
 	if result.BaseAdminURL == "" {
 		result.BaseAdminURL = "https://admin.shantaram-spb.ru"
