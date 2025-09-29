@@ -866,6 +866,8 @@ components:
         id:
           type: string
           format: uuid
+        index:
+          type: integer
         title:
           type: string
         description:
@@ -883,6 +885,7 @@ components:
           format: date-time
       required:
         - id
+        - index
         - menuId
         - title
         - description

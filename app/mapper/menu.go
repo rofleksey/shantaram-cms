@@ -32,6 +32,7 @@ func MapProduct(p database.Product) api.Product {
 		Created:     p.Created,
 		Description: p.Description,
 		Id:          p.ID,
+		Index:       int(p.Index),
 		Price:       p.Price,
 		Title:       p.Title,
 		Updated:     p.Updated,
