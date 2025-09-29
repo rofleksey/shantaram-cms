@@ -43,7 +43,6 @@ func MapOrder(o database.Order) api.Order {
 	return api.Order{
 		ClientComment: o.ClientComment,
 		ClientName:    o.ClientName,
-		ClientPhone:   o.ClientPhone,
 		Created:       o.Created,
 		Id:            o.ID,
 		Index:         int(o.Index),
@@ -63,10 +62,6 @@ func OrderToNotificationText(o database.Order) string {
 
 	builder.WriteString("Имя: ")
 	builder.WriteString(o.ClientName)
-	builder.WriteString("\n")
-
-	builder.WriteString("Телефон: ")
-	builder.WriteString(o.ClientPhone)
 	builder.WriteString("\n")
 
 	if o.ClientComment != nil {

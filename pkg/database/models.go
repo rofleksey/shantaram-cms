@@ -30,7 +30,6 @@ type Order struct {
 	Updated       time.Time
 	Status        api.OrderStatus
 	ClientName    string
-	ClientPhone   string
 	ClientComment *string
 	Seen          bool
 	Items         []api.OrderItem

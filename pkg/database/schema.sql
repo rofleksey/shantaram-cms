@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS orders
     updated        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status         VARCHAR(64)  NOT NULL,
     client_name    VARCHAR(255) NOT NULL,
-    client_phone   VARCHAR(64)  NOT NULL,
     client_comment TEXT,
     seen           BOOLEAN      NOT NULL DEFAULT false,
     items          JSONB        NOT NULL

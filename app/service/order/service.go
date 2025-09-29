@@ -79,7 +79,6 @@ func (s *Service) CreateOrder(ctx context.Context, req *api.NewOrderRequest) err
 		ID:            req.Id,
 		TableID:       nil,
 		ClientName:    req.Name,
-		ClientPhone:   req.Phone,
 		ClientComment: req.Comment,
 		Status:        api.OrderStatusOpen,
 		Seen:          false,

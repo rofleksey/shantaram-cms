@@ -23,9 +23,9 @@ type Querier interface {
 	CreateMigration(ctx context.Context, arg CreateMigrationParams) (string, error)
 	//CreateOrder
 	//
-	//  INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
-	//  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	//  RETURNING id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+	//  INSERT INTO orders (id, table_id, client_name, client_comment, status, seen, items)
+	//  VALUES ($1, $2, $3, $4, $5, $6, $7)
+	//  RETURNING id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
 	//CreateProduct
 	//
@@ -83,13 +83,13 @@ type Querier interface {
 	GetMigrations(ctx context.Context) ([]Migration, error)
 	//GetOrderByID
 	//
-	//  SELECT id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+	//  SELECT id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 	//  FROM orders
 	//  WHERE id = $1
 	GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 	//GetOrdersPaginated
 	//
-	//  SELECT id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+	//  SELECT id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 	//  FROM orders
 	//  ORDER BY index DESC
 	//  OFFSET $1 LIMIT $2

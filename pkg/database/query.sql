@@ -1,6 +1,6 @@
 -- name: CreateOrder :one
-INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO orders (id, table_id, client_name, client_comment, status, seen, items)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: GetOrderByID :one

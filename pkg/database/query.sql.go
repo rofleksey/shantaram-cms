@@ -51,16 +51,15 @@ func (q *Queries) CreateMigration(ctx context.Context, arg CreateMigrationParams
 }
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+INSERT INTO orders (id, table_id, client_name, client_comment, status, seen, items)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 `
 
 type CreateOrderParams struct {
 	ID            uuid.UUID
 	TableID       *string
 	ClientName    string
-	ClientPhone   string
 	ClientComment *string
 	Status        api.OrderStatus
 	Seen          bool
@@ -69,15 +68,14 @@ type CreateOrderParams struct {
 
 // CreateOrder
 //
-//	INSERT INTO orders (id, table_id, client_name, client_phone, client_comment, status, seen, items)
-//	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-//	RETURNING id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+//	INSERT INTO orders (id, table_id, client_name, client_comment, status, seen, items)
+//	VALUES ($1, $2, $3, $4, $5, $6, $7)
+//	RETURNING id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRow(ctx, createOrder,
 		arg.ID,
 		arg.TableID,
 		arg.ClientName,
-		arg.ClientPhone,
 		arg.ClientComment,
 		arg.Status,
 		arg.Seen,
@@ -92,7 +90,6 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.Updated,
 		&i.Status,
 		&i.ClientName,
-		&i.ClientPhone,
 		&i.ClientComment,
 		&i.Seen,
 		&i.Items,
@@ -342,14 +339,14 @@ func (q *Queries) GetMigrations(ctx context.Context) ([]Migration, error) {
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+SELECT id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 FROM orders
 WHERE id = $1
 `
 
 // GetOrderByID
 //
-//	SELECT id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+//	SELECT id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 //	FROM orders
 //	WHERE id = $1
 func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error) {
@@ -363,7 +360,6 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 		&i.Updated,
 		&i.Status,
 		&i.ClientName,
-		&i.ClientPhone,
 		&i.ClientComment,
 		&i.Seen,
 		&i.Items,
@@ -372,7 +368,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (Order, error)
 }
 
 const getOrdersPaginated = `-- name: GetOrdersPaginated :many
-SELECT id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+SELECT id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 FROM orders
 ORDER BY index DESC
 OFFSET $1 LIMIT $2
@@ -385,7 +381,7 @@ type GetOrdersPaginatedParams struct {
 
 // GetOrdersPaginated
 //
-//	SELECT id, index, table_id, created, updated, status, client_name, client_phone, client_comment, seen, items
+//	SELECT id, index, table_id, created, updated, status, client_name, client_comment, seen, items
 //	FROM orders
 //	ORDER BY index DESC
 //	OFFSET $1 LIMIT $2
@@ -406,7 +402,6 @@ func (q *Queries) GetOrdersPaginated(ctx context.Context, arg GetOrdersPaginated
 			&i.Updated,
 			&i.Status,
 			&i.ClientName,
-			&i.ClientPhone,
 			&i.ClientComment,
 			&i.Seen,
 			&i.Items,
