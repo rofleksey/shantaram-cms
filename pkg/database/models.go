@@ -35,6 +35,12 @@ type Order struct {
 	Items         []api.OrderItem
 }
 
+type Param struct {
+	ID             int32
+	HeaderText     *string
+	HeaderDeadline *time.Time
+}
+
 type Product struct {
 	ID          uuid.UUID
 	GroupID     uuid.UUID

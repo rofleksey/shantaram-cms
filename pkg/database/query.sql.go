@@ -416,6 +416,24 @@ func (q *Queries) GetOrdersPaginated(ctx context.Context, arg GetOrdersPaginated
 	return items, nil
 }
 
+const getParams = `-- name: GetParams :one
+SELECT id, header_text, header_deadline
+FROM params
+WHERE id = 1
+`
+
+// GetParams
+//
+//	SELECT id, header_text, header_deadline
+//	FROM params
+//	WHERE id = 1
+func (q *Queries) GetParams(ctx context.Context) (Param, error) {
+	row := q.db.QueryRow(ctx, getParams)
+	var i Param
+	err := row.Scan(&i.ID, &i.HeaderText, &i.HeaderDeadline)
+	return i, err
+}
+
 const getProductByID = `-- name: GetProductByID :one
 SELECT id, group_id, index, title, description, price, available, created, updated
 FROM products
@@ -572,6 +590,29 @@ WHERE id = $1
 //	WHERE id = $1
 func (q *Queries) SetOrderSeen(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, setOrderSeen, id)
+	return err
+}
+
+const setParamsHeader = `-- name: SetParamsHeader :exec
+UPDATE params
+SET header_text = $1,
+    header_deadline = $2
+WHERE id = 1
+`
+
+type SetParamsHeaderParams struct {
+	HeaderText     *string
+	HeaderDeadline *time.Time
+}
+
+// SetParamsHeader
+//
+//	UPDATE params
+//	SET header_text = $1,
+//	    header_deadline = $2
+//	WHERE id = 1
+func (q *Queries) SetParamsHeader(ctx context.Context, arg SetParamsHeaderParams) error {
+	_, err := q.db.Exec(ctx, setParamsHeader, arg.HeaderText, arg.HeaderDeadline)
 	return err
 }
 

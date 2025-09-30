@@ -7,6 +7,7 @@ import (
 	"shantaram/app/service/limits"
 	"shantaram/app/service/menu"
 	"shantaram/app/service/order"
+	"shantaram/app/service/params"
 	"shantaram/app/service/pubsub"
 	"shantaram/pkg/config"
 	"shantaram/pkg/database"
@@ -27,6 +28,7 @@ type Server struct {
 	pubsubService *pubsub.Service
 	menuService   *menu.Service
 	orderService  *order.Service
+	paramsService *params.Service
 }
 
 func NewStrictServer(di *do.Injector) *Server {
@@ -40,5 +42,6 @@ func NewStrictServer(di *do.Injector) *Server {
 		pubsubService: do.MustInvoke[*pubsub.Service](di),
 		menuService:   do.MustInvoke[*menu.Service](di),
 		orderService:  do.MustInvoke[*order.Service](di),
+		paramsService: do.MustInvoke[*params.Service](di),
 	}
 }

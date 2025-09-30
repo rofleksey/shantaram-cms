@@ -148,6 +148,12 @@ type OrdersResponse struct {
 	TotalCount int     `json:"totalCount"`
 }
 
+// Params defines model for Params.
+type Params struct {
+	HeaderDeadline *time.Time `json:"headerDeadline,omitempty"`
+	HeaderText     *string    `json:"headerText,omitempty"`
+}
+
 // Product defines model for Product.
 type Product struct {
 	Available   bool               `json:"available"`
@@ -167,6 +173,12 @@ type ProductGroup struct {
 	Products []Product          `json:"products"`
 	Title    string             `json:"title"`
 	Updated  time.Time          `json:"updated"`
+}
+
+// SetHeaderTextRequest defines model for SetHeaderTextRequest.
+type SetHeaderTextRequest struct {
+	Deadline *time.Time `json:"deadline,omitempty"`
+	Text     *string    `json:"text,omitempty"`
 }
 
 // SetMenuOrderingRequest defines model for SetMenuOrderingRequest.
@@ -247,6 +259,9 @@ type MarkOrderSeenJSONRequestBody = MarkOrderSeenRequest
 
 // SetOrderStatusJSONRequestBody defines body for SetOrderStatus for application/json ContentType.
 type SetOrderStatusJSONRequestBody = SetOrderStatusRequest
+
+// SetHeaderTextJSONRequestBody defines body for SetHeaderText for application/json ContentType.
+type SetHeaderTextJSONRequestBody = SetHeaderTextRequest
 
 // AsWsOrdersChangedMessage returns the union data inside the WsMessage as a WsOrdersChangedMessage
 func (t WsMessage) AsWsOrdersChangedMessage() (WsOrdersChangedMessage, error) {
@@ -439,6 +454,12 @@ type ServerInterface interface {
 	// Get paginated orders
 	// (GET /orders)
 	GetOrders(c *fiber.Ctx, params GetOrdersParams) error
+	// Get params
+	// (GET /params)
+	GetParams(c *fiber.Ctx) error
+	// Set header text
+	// (POST /params/setHeaderText)
+	SetHeaderText(c *fiber.Ctx) error
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -635,6 +656,18 @@ func (siw *ServerInterfaceWrapper) GetOrders(c *fiber.Ctx) error {
 	return siw.Handler.GetOrders(c, params)
 }
 
+// GetParams operation middleware
+func (siw *ServerInterfaceWrapper) GetParams(c *fiber.Ctx) error {
+
+	return siw.Handler.GetParams(c)
+}
+
+// SetHeaderText operation middleware
+func (siw *ServerInterfaceWrapper) SetHeaderText(c *fiber.Ctx) error {
+
+	return siw.Handler.SetHeaderText(c)
+}
+
 // FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
 	BaseURL     string
@@ -689,6 +722,10 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Get(options.BaseURL+"/order/:id", wrapper.GetOrder)
 
 	router.Get(options.BaseURL+"/orders", wrapper.GetOrders)
+
+	router.Get(options.BaseURL+"/params", wrapper.GetParams)
+
+	router.Post(options.BaseURL+"/params/setHeaderText", wrapper.SetHeaderText)
 
 }
 
@@ -1517,6 +1554,101 @@ func (response GetOrders500JSONResponse) VisitGetOrdersResponse(ctx *fiber.Ctx) 
 	return ctx.JSON(&response)
 }
 
+type GetParamsRequestObject struct {
+}
+
+type GetParamsResponseObject interface {
+	VisitGetParamsResponse(ctx *fiber.Ctx) error
+}
+
+type GetParams200JSONResponse Params
+
+func (response GetParams200JSONResponse) VisitGetParamsResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
+}
+
+type GetParams400JSONResponse General
+
+func (response GetParams400JSONResponse) VisitGetParamsResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(400)
+
+	return ctx.JSON(&response)
+}
+
+type GetParams401JSONResponse General
+
+func (response GetParams401JSONResponse) VisitGetParamsResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(401)
+
+	return ctx.JSON(&response)
+}
+
+type GetParams404JSONResponse General
+
+func (response GetParams404JSONResponse) VisitGetParamsResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(404)
+
+	return ctx.JSON(&response)
+}
+
+type GetParams500JSONResponse General
+
+func (response GetParams500JSONResponse) VisitGetParamsResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(500)
+
+	return ctx.JSON(&response)
+}
+
+type SetHeaderTextRequestObject struct {
+	Body *SetHeaderTextJSONRequestBody
+}
+
+type SetHeaderTextResponseObject interface {
+	VisitSetHeaderTextResponse(ctx *fiber.Ctx) error
+}
+
+type SetHeaderText200Response struct {
+}
+
+func (response SetHeaderText200Response) VisitSetHeaderTextResponse(ctx *fiber.Ctx) error {
+	ctx.Status(200)
+	return nil
+}
+
+type SetHeaderText400JSONResponse General
+
+func (response SetHeaderText400JSONResponse) VisitSetHeaderTextResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(400)
+
+	return ctx.JSON(&response)
+}
+
+type SetHeaderText401JSONResponse General
+
+func (response SetHeaderText401JSONResponse) VisitSetHeaderTextResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(401)
+
+	return ctx.JSON(&response)
+}
+
+type SetHeaderText500JSONResponse General
+
+func (response SetHeaderText500JSONResponse) VisitSetHeaderTextResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/json")
+	ctx.Status(500)
+
+	return ctx.JSON(&response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Health check
@@ -1570,6 +1702,12 @@ type StrictServerInterface interface {
 	// Get paginated orders
 	// (GET /orders)
 	GetOrders(ctx context.Context, request GetOrdersRequestObject) (GetOrdersResponseObject, error)
+	// Get params
+	// (GET /params)
+	GetParams(ctx context.Context, request GetParamsRequestObject) (GetParamsResponseObject, error)
+	// Set header text
+	// (POST /params/setHeaderText)
+	SetHeaderText(ctx context.Context, request SetHeaderTextRequestObject) (SetHeaderTextResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx *fiber.Ctx, args interface{}) (interface{}, error)
@@ -2084,40 +2222,97 @@ func (sh *strictHandler) GetOrders(ctx *fiber.Ctx, params GetOrdersParams) error
 	return nil
 }
 
+// GetParams operation middleware
+func (sh *strictHandler) GetParams(ctx *fiber.Ctx) error {
+	var request GetParamsRequestObject
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.GetParams(ctx.UserContext(), request.(GetParamsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetParams")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetParamsResponseObject); ok {
+		if err := validResponse.VisitGetParamsResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// SetHeaderText operation middleware
+func (sh *strictHandler) SetHeaderText(ctx *fiber.Ctx) error {
+	var request SetHeaderTextRequestObject
+
+	var body SetHeaderTextJSONRequestBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.Body = &body
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.SetHeaderText(ctx.UserContext(), request.(SetHeaderTextRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetHeaderText")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(SetHeaderTextResponseObject); ok {
+		if err := validResponse.VisitSetHeaderTextResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"AAA=",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -126,6 +126,16 @@ WHERE (title ILIKE '%' || $1 || '%' OR description ILIKE '%' || $1 || '%')
   AND available = true
 ORDER BY title;
 
+-- name: GetParams :one
+SELECT *
+FROM params
+WHERE id = 1;
+
+-- name: SetParamsHeader :exec
+UPDATE params
+SET header_text = $1,
+    header_deadline = $2
+WHERE id = 1;
 
 -- name: GetMigrations :many
 SELECT *

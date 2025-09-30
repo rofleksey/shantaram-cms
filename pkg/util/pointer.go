@@ -72,6 +72,15 @@ func PtrInt32ToPtrInt(ptr *int32) *int {
 	return &result
 }
 
+func PtrIntoPtrInt32(ptr *int) *int32 {
+	if ptr == nil {
+		return nil
+	}
+
+	result := int32(*ptr)
+	return &result
+}
+
 func PtrInt64ToPtrInt(ptr *int64) *int {
 	if ptr == nil {
 		return nil

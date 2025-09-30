@@ -59,6 +59,74 @@ paths:
                 $ref: '#/components/schemas/General'
           description: 'Internal Server Error'
 
+  /params:
+    get:
+      summary: 'Get params'
+      operationId: 'getParams'
+      responses:
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Params'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Not Found'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
+  /params/setHeaderText:
+    post:
+      summary: 'Set header text'
+      operationId: 'setHeaderText'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetHeaderTextRequest'
+        required: true
+      responses:
+        '200':
+          description: 'Header text updated successfully'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Bad Request'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Unauthorized'
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/General'
+          description: 'Internal Server Error'
+
   /order:
     post:
       summary: 'Create new order'
@@ -663,6 +731,24 @@ components:
       required:
         - id
         - status
+      type: object
+
+    SetHeaderTextRequest:
+      properties:
+        text:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+      type: object
+
+    Params:
+      properties:
+        headerText:
+          type: string
+        headerDeadline:
+          type: string
+          format: date-time
       type: object
 
     MarkOrderSeenRequest:

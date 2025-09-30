@@ -45,11 +45,15 @@ CREATE TABLE IF NOT EXISTS products
   CONSTRAINT products_order UNIQUE (group_id, index) DEFERRABLE INITIALLY DEFERRED
 );
 
-CREATE TABLE IF NOT EXISTS settings
+CREATE TABLE IF NOT EXISTS params
 (
-  id   VARCHAR(255) PRIMARY KEY,
-  data JSON NOT NULL
+  id              INTEGER PRIMARY KEY CHECK (id = 1),
+  header_text     TEXT,
+  header_deadline TIMESTAMP
 );
+INSERT INTO params (id)
+VALUES (1)
+ON CONFLICT (id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS migration
 (

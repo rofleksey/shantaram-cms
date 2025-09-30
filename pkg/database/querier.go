@@ -94,6 +94,12 @@ type Querier interface {
 	//  ORDER BY index DESC
 	//  OFFSET $1 LIMIT $2
 	GetOrdersPaginated(ctx context.Context, arg GetOrdersPaginatedParams) ([]Order, error)
+	//GetParams
+	//
+	//  SELECT id, header_text, header_deadline
+	//  FROM params
+	//  WHERE id = 1
+	GetParams(ctx context.Context) (Param, error)
 	//GetProductByID
 	//
 	//  SELECT id, group_id, index, title, description, price, available, created, updated
@@ -128,6 +134,13 @@ type Querier interface {
 	//      updated = CURRENT_TIMESTAMP
 	//  WHERE id = $1
 	SetOrderSeen(ctx context.Context, id uuid.UUID) error
+	//SetParamsHeader
+	//
+	//  UPDATE params
+	//  SET header_text = $1,
+	//      header_deadline = $2
+	//  WHERE id = 1
+	SetParamsHeader(ctx context.Context, arg SetParamsHeaderParams) error
 	//SetProductAvailability
 	//
 	//  UPDATE products

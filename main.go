@@ -11,6 +11,7 @@ import (
 	"shantaram/app/service/limits"
 	"shantaram/app/service/menu"
 	"shantaram/app/service/order"
+	"shantaram/app/service/params"
 	"shantaram/app/service/pubsub"
 	"shantaram/app/service/telegram"
 	"shantaram/pkg/config"
@@ -115,6 +116,9 @@ func main() {
 	do.Provide(di, telegram.New)
 	do.Provide(di, menu.New)
 	do.Provide(di, order.New)
+	do.Provide(di, params.New)
+
+	go do.MustInvoke[*params.Service](di).RunHeaderDeadline(appCtx)
 
 	wsController := controller.NewWS(di)
 
