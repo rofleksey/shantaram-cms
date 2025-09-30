@@ -3,11 +3,18 @@ package controller
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"shantaram/app/api"
 	"shantaram/app/mapper"
+
+	"github.com/samber/oops"
 )
 
 func (s *Server) SetHeaderText(ctx context.Context, request api.SetHeaderTextRequestObject) (api.SetHeaderTextResponseObject, error) {
+	if !s.authService.IsAdmin(ctx) {
+		return nil, oops.With("status_code", http.StatusUnauthorized).Errorf("Unauthorized")
+	}
+
 	if err := s.paramsService.SetHeaderText(ctx, request.Body.Text, request.Body.Deadline); err != nil {
 		return nil, fmt.Errorf("SetHeaderText: %w", err)
 	}
