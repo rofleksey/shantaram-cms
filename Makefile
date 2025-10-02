@@ -12,7 +12,7 @@ gen:
 
 .PHONY: lint
 lint:
-	@npx golangci-lint run
+	@golangci-lint run
 
 .PHONY: build
 build:

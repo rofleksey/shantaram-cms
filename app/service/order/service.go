@@ -138,7 +138,7 @@ func (s *Service) GetOrderByID(ctx context.Context, id uuid.UUID) (database.Orde
 			return database.Order{}, s.tracing.Error(span, oops.With("status_code", http.StatusNotFound).Errorf("order not found"))
 		}
 
-		return database.Order{}, err
+		return database.Order{}, s.tracing.Error(span, fmt.Errorf("GetOrderByID: %w", err))
 	}
 
 	s.tracing.Success(span)

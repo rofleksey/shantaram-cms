@@ -104,6 +104,7 @@ linters:
         - .*LogConfig.*
         - .*slogtelegram.Option.*
         - .*slogloki.Option.*
+        - .*sentry.ClientOptions.*
   exclusions:
     generated: lax
     presets:

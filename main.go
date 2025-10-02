@@ -53,7 +53,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("telemetry init failed: %v", err)
 	}
-	defer tel.Shutdown(appCtx)
+	defer func() {
+		_ = tel.Shutdown(appCtx)
+	}()
 	do.ProvideValue(di, tel)
 
 	if err = tlog.Init(cfg, tel); err != nil {
