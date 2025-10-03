@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"shantaram/app/api"
 	"shantaram/pkg/database"
-	"shantaram/pkg/util"
 	"strings"
+
+	"github.com/rofleksey/meg"
 )
 
 func MapOrder(o database.Order) api.Order {
@@ -50,13 +51,13 @@ func OrderToNotificationText(o database.Order) string {
 		builder.WriteString(" x ")
 		builder.WriteString(fmt.Sprint(item.Amount))
 		builder.WriteString(" - ")
-		builder.WriteString(fmt.Sprintf("%.2f", util.FixPrice(item.Price*float64(item.Amount))))
+		builder.WriteString(fmt.Sprintf("%.2f", meg.FixPrice(item.Price*float64(item.Amount))))
 		builder.WriteString(" ₽\n")
 
-		totalPrice += util.FixPrice(float64(item.Amount) * item.Price)
+		totalPrice += meg.FixPrice(float64(item.Amount) * item.Price)
 	}
 
-	totalPrice = util.FixPrice(totalPrice)
+	totalPrice = meg.FixPrice(totalPrice)
 
 	builder.WriteString("\n")
 	builder.WriteString("Сумма: ")

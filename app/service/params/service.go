@@ -9,6 +9,7 @@ import (
 	"shantaram/pkg/telemetry"
 	"time"
 
+	"github.com/rofleksey/meg"
 	"github.com/samber/do"
 )
 
@@ -45,21 +46,13 @@ func (s *Service) SetHeaderText(ctx context.Context, text *string, deadline *tim
 }
 
 func (s *Service) RunHeaderDeadline(ctx context.Context) {
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if err := s.checkHeaderDeadline(ctx); err != nil {
-				slog.Error("checkHeaderDeadline error",
-					slog.Any("error", err),
-				)
-			}
+	meg.RunTicker(ctx, time.Minute, func() {
+		if err := s.checkHeaderDeadline(ctx); err != nil {
+			slog.Error("checkHeaderDeadline error",
+				slog.Any("error", err),
+			)
 		}
-	}
+	})
 }
 
 func (s *Service) checkHeaderDeadline(ctx context.Context) error {

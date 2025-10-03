@@ -18,6 +18,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/rofleksey/meg"
 	"github.com/samber/do"
 	slogfiber "github.com/samber/slog-fiber"
 )
@@ -79,7 +80,7 @@ func FiberMiddleware(app *fiber.App, di *do.Injector) {
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
 		StackTraceHandler: func(ctx *fiber.Ctx, e any) {
-			stackStr := util.TrimSuffixToNRunes(string(debug.Stack()), 2048)
+			stackStr := meg.TrimSuffixToNRunes(string(debug.Stack()), 2048)
 
 			slog.ErrorContext(ctx.Context(), "Panic",
 				slog.Any("error", e),
