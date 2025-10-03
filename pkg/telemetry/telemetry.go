@@ -46,9 +46,9 @@ func Init(cfg *config.Config) (*Telemetry, error) {
 			TracerProvider: noopTracerProvider,
 			MeterProvider:  noopMeterProvider,
 			LogProvider:    noopLoggerProvider,
-			Tracer:         noopTracerProvider.Tracer(build.ServiceName),
-			Meter:          noopMeterProvider.Meter(build.ServiceName),
-			Logger:         noopLoggerProvider.Logger(build.ServiceName),
+			Tracer:         noopTracerProvider.Tracer(cfg.ServiceName),
+			Meter:          noopMeterProvider.Meter(cfg.ServiceName),
+			Logger:         noopLoggerProvider.Logger(cfg.ServiceName),
 			Shutdown:       func(context.Context) error { return nil },
 		}, nil
 	}
@@ -57,7 +57,7 @@ func Init(cfg *config.Config) (*Telemetry, error) {
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String(build.ServiceName),
+			semconv.ServiceNameKey.String(cfg.ServiceName),
 			semconv.ServiceVersionKey.String(build.Tag),
 			semconv.DeploymentEnvironmentKey.String("production"),
 		),
@@ -92,9 +92,9 @@ func Init(cfg *config.Config) (*Telemetry, error) {
 		sentryotel.NewSentryPropagator(),
 	))
 
-	tracer := tracerProvider.Tracer(build.ServiceName)
-	meter := meterProvider.Meter(build.ServiceName)
-	logger := loggerProvider.Logger(build.ServiceName)
+	tracer := tracerProvider.Tracer(cfg.ServiceName)
+	meter := meterProvider.Meter(cfg.ServiceName)
+	logger := loggerProvider.Logger(cfg.ServiceName)
 
 	shutdown := func(ctx context.Context) error {
 		var errs []error

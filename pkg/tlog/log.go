@@ -21,7 +21,7 @@ func Init(cfg *config.Config, tel *telemetry.Telemetry) error {
 	})}
 
 	if cfg.Telemetry.Enabled {
-		logHandlers = append(logHandlers, otelslog.NewHandler(build.ServiceName,
+		logHandlers = append(logHandlers, otelslog.NewHandler(cfg.ServiceName,
 			otelslog.WithSource(true),
 			otelslog.WithLoggerProvider(tel.LogProvider),
 		))
@@ -40,7 +40,7 @@ func Init(cfg *config.Config, tel *telemetry.Telemetry) error {
 	ctxHandler := &contextHandler{multiHandler}
 
 	logger := slog.New(ctxHandler).With(
-		slog.String(string(semconv.ServiceNameKey), build.ServiceName),
+		slog.String(string(semconv.ServiceNameKey), cfg.ServiceName),
 		slog.String(string(semconv.ServiceVersionKey), build.Tag),
 	)
 	slog.SetDefault(logger)

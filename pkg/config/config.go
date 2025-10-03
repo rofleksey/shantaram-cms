@@ -11,6 +11,7 @@ import (
 )
 
 type Config struct {
+	ServiceName     string `yaml:"service_name" validate:"required"`
 	BaseApiURL      string `yaml:"base_api_url" validate:"required"`
 	BaseFrontURL    string `yaml:"base_front_url" validate:"required"`
 	BaseWWWFrontURL string `yaml:"base_www_front_url" validate:"required"`
@@ -64,6 +65,10 @@ func Load() (*Config, error) {
 	var result Config
 	if err := yaml.Unmarshal(data, &result); err != nil {
 		return nil, fmt.Errorf("failed to parse YAML config: %w", err)
+	}
+
+	if result.ServiceName == "" {
+		result.ServiceName = "shantaram-api"
 	}
 
 	if result.BaseApiURL == "" {
